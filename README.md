@@ -1,2 +1,2 @@
-# pd_events
+# PD events
 Tool to create Pagerduty Incidents/Events
