@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PagerDuty Event Sender - Multiple Scenarios at once - Script Generator</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🦑 </text></svg>">
+    <style>
+        body {font-family:Arial,sans-serif;max-width:800px;margin:0 auto;padding:20px;}
+        h1,h2,h3 {color:#1d3557;}
+        .section {background-color:#f1faee;padding:20px;margin-bottom:20px;border-radius:5px;}
+        .field {display:flex;align-items:center;margin-bottom:10px;}
+        label {flex:0 0 120px;margin-right:10px;}
+        input,select {flex:1;padding:5px;margin-right:10px;width:100%;box-sizing:border-box;}
+        button {background-color:#457b9d;color:white;padding:10px 20px;border:none;border-radius:5px;cursor:pointer;}
+        button:hover {background-color:#1d3557;}
+        #result {margin-top:20px;padding:10px;background-color:#a8dadc;border-radius:5px;}
+        .scenario {border:1px solid #ced4da;padding:10px;margin-bottom:20px;border-radius:5px;}
+        .scenario-header {display:flex;align-items:center;margin-bottom:10px;}
+        .scenario-title {font-weight:bold;margin-right:10px;white-space:nowrap;}
+        .scenario-type-container {flex-grow:1;display:flex;align-items:center;}
+        .scenario-type {flex-grow:1;margin-right:10px;}
+        .remove-scenario,.remove-field {background-color:#e63946;color:white;padding:5px 10px;border:none;border-radius:3px;cursor:pointer;white-space:nowrap;margin-left:10px;}
+        .scenario-details {margin-top:10px;padding-top:10px;border-top:1px solid #ccc;}
+        .custom-details {margin-top:20px;padding:10px;background-color:#f8f9fa;border-radius:5px;}
+        .custom-field {display:flex;align-items:center;margin-bottom:10px;}
+        .custom-field label {flex:0 0 155px;margin-right:10px;}
+        .custom-field input[type="text"] {flex:1;width:100%;box-sizing:border-box;}
+        .toggle-custom-details,.add-field {background-color:#2a9d8f;color:white;padding:5px 10px;border:none;border-radius:3px;cursor:pointer;margin-top:10px;}
+        h2 .subtext {font-size:0.6em;font-weight:normal;color:#666;}
+        pre {background-color:#f8f9fa;border:1px solid #e9ecef;border-radius:4px;padding:10px;white-space:pre-wrap;word-wrap:break-word;font-family:monospace;font-size:14px;max-height:400px;overflow-y:auto;}
+        #downloadShellScriptBtn {background-color:#17a2b8;margin-left:10px;}
+        #downloadShellScriptBtn:hover {background-color:#138496;}
+        #reloadPayloadBtn,#hidePayloadBtn,#showPayloadBtn {background-color:#6c757d;color:white;padding:5px 10px;border:none;border-radius:3px;cursor:pointer;margin-bottom:10px;}
+        #reloadPayloadBtn:hover,#hidePayloadBtn:hover,#showPayloadBtn:hover {background-color:#5a6268;}
+        .bold-select {font-weight:bold;-webkit-appearance:none;-moz-appearance:none;appearance:none;background-image:url("data:image/svg+xml;utf8,<svg fill='black' height='24' viewBox='0 0 24 24' width='24' xmlns='http://www.w3.org/2000/svg'><path d='M7 10l5 5 5-5z'/><path d='M0 0h24v24H0z' fill='none'/></svg>");background-repeat:no-repeat;background-position-x:100%;background-position-y:5px;padding-right:25px;}
+        .colored-header {background-color:#a8dadc;padding:10px;border-radius:5px 5px 0 0;display:flex;align-items:center;justify-content:space-between;}
+        #sendEventsBtn {background-color:#F36A00;padding:12px 24px;font-size:18px;font-weight:bold;}
+        #sendEventsBtn:hover {background-color:#f57c00;}
+        .title-group {text-align:center;margin-bottom:20px;}
+        .title-group h1 {margin-bottom:0.2em;font-size:2em;display:flex;align-items:baseline;justify-content:center;}
+        .version {font-size:0.4em;font-weight:normal;color:#666;margin-left:10px;}
+        .bug-report {margin-top:40px;padding:10px;text-align:center;font-size:0.9em;border-top:1px solid #a8dadc;}
+        .bug-report a {color:#457b9d;text-decoration:none;}
+        .bug-report a:hover {text-decoration:underline;}
+    </style>
+</head>
+<body>
+    <div class="title-group">
+        <header class="title-group">
+            <h1>PagerDuty Event Sender <span class="version">v1.0</span></h1>
+            <h2>Multiple Scenarios at once - Script Generator</h2>
+        </header>
+    </div>
+
+    <div class="section">
+        <h2>Common Fields <span class="subtext">Will be applied to every event</span></h2>
+        <div id="routing-key-field" class="field">
+            <label for="routing_key">Routing Key:</label>
+            <input type="text" id="routing_key" placeholder="YOUR_ROUTING_KEY_HERE">
+        </div>
+        <div id="event-action-field" class="field">
+            <label for="event_action">Event Action:</label>
+            <select id="event_action" onchange="toggleDedupKeyField()">
+                <option value="trigger">Trigger</option>
+                <option value="acknowledge">Acknowledge</option>
+                <option value="resolve">Resolve</option>
+            </select>
+        </div>
+        <div id="dedup-key-field" class="field" style="display: none;">
+            <label for="dedup_key">Dedup Key:</label>
+            <input type="text" id="dedup_key" placeholder="Enter dedup key">
+        </div>
+        <input type="hidden" id="client" value="FireDuty 2.0">
+    </div>
+
+    <div class="section">
+        <h2>Scenarios <span class="subtext">Go nuts!</span></h2>
+        <div id="scenarios-container"></div>
+        <button onclick="addScenario()">Add Scenario</button>
+    </div>
+
+    <button id="sendEventsBtn" onclick="sendEvents()">Release the Kraken!</button>
+    <button id="showPayloadBtn" onclick="showPayload()">Show Payload</button>
+    <button id="hidePayloadBtn" onclick="hidePayload()" style="display: none;">Hide Payload</button>
+
+    <div id="result"></div>
+
+    <div class="bug-report">
+        <p>Found a bug? <a href="https://github.com/jplassnibatt/pd_events/issues" target="_blank" rel="noopener noreferrer">Open an issue on GitHub</a></p>
+    </div>
+
+    <script>
+        const scenarioTemplates = {
+            database: {summary:"High latency and connection timeouts in primary database cluster",severity:"critical",source:"db-cluster-01.us-east-1.com",component:"PostgreSQL",group:"Database Infrastructure",class:"Performance Degradation",customDetails:{db_name:"primary_cluster",connection_count:"500",avg_query_time:"2.5s"}},
+            cpu: {summary:"Excessive CPU usage detected on production web server",severity:"critical",source:"web-server-05.us-east-2.com",component:"Apache Web Server",group:"Web Infrastructure",class:"Resource Exhaustion",customDetails:{cpu_usage:"95%",process_count:"250",load_average:"8.5"}},
+            disk: {summary:"Critical disk space shortage on file server",severity:"critical",source:"file-server-03.us-east-3.com",component:"Storage System",group:"Storage Infrastructure",class:"Capacity",customDetails:{disk_usage:"98%",free_space:"20GB",affected_partition:"/dev/sda1"}},
+            application: {summary:"Application unresponsive - multiple user reports",severity:"error",source:"app-server-02.us-east-4.com",component:"E-commerce Application",group:"Application Stack",class:"Availability",customDetails:{error_rate:"15%",response_time:"10s",affected_users:"500+"}},
+            login: {summary:"Multiple failed login attempts detected",severity:"error",source:"auth-server-01.us-west-1.com",component:"Authentication Service",group:"Login",class:"Security Threat",customDetails:{failed_attempts:"100+",affected_accounts:"25",source_ip:"192.168.1.100"}},
+            network: {summary:"Network connectivity issues affecting multiple services",severity:"critical",source:"core-switch-01.us-west-2.com",component:"Core Network Infrastructure",group:"Network",class:"Connectivity",customDetails:{packet_loss:"25%",affected_vlans:"VLAN 10, VLAN 20",bandwidth_utilization:"90%"}}
+        };
+
+        function addScenario() {
+            const container = document.getElementById('scenarios-container');
+            const scenarioId = `scenario-${Date.now()}`;
+            const scenarioCount = container.children.length + 1;
+            const scenarioHtml = `
+                <div id="${scenarioId}" class="scenario">
+                    <div class="scenario-header colored-header">
+                        <span class="scenario-title">Scenario <span class="scenario-number">${scenarioCount}</span>:</span>
+                        <div class="scenario-type-container">
+                            <select id="${scenarioId}-type" class="scenario-type bold-select" onchange="updateScenarioFields('${scenarioId}')">
+                                <option value="database">Database Issues</option>
+                                <option value="cpu">CPU Issues</option>
+                                <option value="disk">Disk Issues</option>
+                                <option value="application">Application Issues</option>
+                                <option value="login">Login Issues</option>
+                                <option value="network">Network Issues</option>
+                            </select>
+                            <button class="remove-scenario" onclick="removeScenario('${scenarioId}')">Remove</button>
+                        </div>
+                    </div>
+                    <div class="scenario-details">
+                        <div class="field">
+                            <label for="${scenarioId}-summary">Summary:</label>
+                            <input type="text" id="${scenarioId}-summary">
+                        </div>
+                        <div class="field">
+                            <label for="${scenarioId}-severity">Severity:</label>
+                            <select id="${scenarioId}-severity">
+                                <option value="critical">Critical</option>
+                                <option value="error">Error</option>
+                                <option value="warning">Warning</option>
+                                <option value="info">Info</option>
+                            </select>
+                        </div>
+                        <div class="field">
+                            <label for="${scenarioId}-source">Source:</label>
+                            <input type="text" id="${scenarioId}-source">
+                        </div>
+                        <div id="${scenarioId}-component-field" class="field">
+                            <label for="${scenarioId}-component">Component:</label>
+                            <input type="text" id="${scenarioId}-component">
+                            <button class="remove-field" onclick="removeField('${scenarioId}-component-field')">x</button>
+                        </div>
+                        <div id="${scenarioId}-group-field" class="field">
+                            <label for="${scenarioId}-group">Group:</label>
+                            <input type="text" id="${scenarioId}-group">
+                            <button class="remove-field" onclick="removeField('${scenarioId}-group-field')">x</button>
+                        </div>
+                        <div id="${scenarioId}-class-field" class="field">
+                            <label for="${scenarioId}-class">Class:</label>
+                            <input type="text" id="${scenarioId}-class">
+                            <button class="remove-field" onclick="removeField('${scenarioId}-class-field')">x</button>
+                        </div>
+                        <div id="${scenarioId}-extra-fields"></div>
+                        <button class="add-field" onclick="addCustomField('${scenarioId}')">Add Field</button>
+                        <button class="toggle-custom-details" onclick="toggleCustomFields('${scenarioId}')">Add Custom Details</button>
+                        <div id="${scenarioId}-custom-details" class="custom-details" style="display: none;">
+                            <h3>Custom Details</h3>
+                        </div>
+                    </div>
+                </div>
+            `;
+            container.insertAdjacentHTML('beforeend', scenarioHtml);
+            updateScenarioFields(scenarioId);
+            addChangeListeners();
+        }
+
+        function removeScenario(scenarioId) {
+            document.getElementById(scenarioId).remove();
+            updateScenarioNumbers();
+        }
+
+        function updateScenarioNumbers() {
+            document.querySelectorAll('.scenario').forEach((scenario, index) => {
+                scenario.querySelector('.scenario-number').textContent = index + 1;
+            });
+        }
+
+        function updateScenarioFields(scenarioId) {
+            const type = document.getElementById(`${scenarioId}-type`).value;
+            const template = scenarioTemplates[type];
+            ['summary', 'severity', 'source', 'component', 'group', 'class'].forEach(field => {
+                const el = document.getElementById(`${scenarioId}-${field}`);
+                if (el) el.value = template[field];
+            });
+            updateCustomFields(scenarioId, template.customDetails);
+        }
+
+        function updateCustomFields(scenarioId, customDetails) {
+            const container = document.getElementById(`${scenarioId}-custom-details`);
+            container.innerHTML = '<h3>Custom Details</h3>';
+            Object.entries(customDetails).forEach(([key, value]) => {
+                container.insertAdjacentHTML('beforeend', `
+                    <div class="custom-field">
+                        <label for="${scenarioId}-${key}">${key}:</label>
+                        <input type="text" id="${scenarioId}-${key}" value="${value}">
+                        <button class="remove-field" onclick="removeCustomField('${scenarioId}', '${key}')">x</button>
+                    </div>
+                `);
+            });
+            container.insertAdjacentHTML('beforeend', `
+                <div id="${scenarioId}-extra-custom-details"></div>
+                <button class="add-field" onclick="addCustomDetailField('${scenarioId}')">Add Custom Detail</button>
+            `);
+        }
+
+        function toggleCustomFields(scenarioId) {
+            const container = document.getElementById(`${scenarioId}-custom-details`);
+            const toggleButton = container.previousElementSibling;
+            if (container.style.display === 'none') {
+                container.style.display = 'block';
+                toggleButton.textContent = 'Remove Custom Details';
+            } else {
+                container.style.display = 'none';
+                toggleButton.textContent = 'Add Custom Details';
+            }
+        }
+
+        function addCustomField(scenarioId) {
+            const container = document.getElementById(`${scenarioId}-extra-fields`);
+            const fieldCount = container.children.length + 1;
+            const fieldId = `${scenarioId}-extra-field-${fieldCount}`;
+            container.insertAdjacentHTML('beforeend', `
+                <div id="${fieldId}" class="field">
+                    <label for="${fieldId}-value">
+                        <input type="text" placeholder="Field name" onchange="updateFieldLabel('${fieldId}')">
+                    </label>
+                    <input type="text" id="${fieldId}-value" placeholder="Field value">
+                    <button class="remove-field" onclick="removeField('${fieldId}')">x</button>
+                </div>
+            `);
+        }
+
+        function updateFieldLabel(fieldId) {
+            const field = document.getElementById(fieldId);
+            const labelInput = field.querySelector('label input');
+            field.querySelector('label').textContent = labelInput.value + ':';
+        }
+
+        function addCustomDetailField(scenarioId) {
+            const container = document.getElementById(`${scenarioId}-extra-custom-details`);
+            const fieldCount = container.children.length + 1;
+            const fieldId = `${scenarioId}-extra-custom-field-${fieldCount}`;
+            container.insertAdjacentHTML('beforeend', `
+                <div id="${fieldId}" class="custom-field">
+                    <label for="${fieldId}-value">
+                        <input type="text" placeholder="Field name" onchange="updateCustomFieldLabel('${fieldId}')">
+                    </label>
+                    <input type="text" id="${fieldId}-value" placeholder="Field value">
+                    <button class="remove-field" onclick="removeCustomField('${scenarioId}', '${fieldId}')">x</button>
+                </div>
+            `);
+        }
+
+        function updateCustomFieldLabel(fieldId) {
+            const field = document.getElementById(fieldId);
+            const labelInput = field.querySelector('label input');
+            field.querySelector('label').textContent = labelInput.value + ':';
+        }
+
+        function removeCustomField(scenarioId, fieldIdOrName) {
+            const container = document.getElementById(`${scenarioId}-custom-details`);
+            const field = container.querySelector(`#${fieldIdOrName}`) ||
+                          container.querySelector(`.custom-field:has(#${scenarioId}-${fieldIdOrName})`);
+            if (field) field.remove();
+        }
+
+        function getScenarioData(scenarioId) {
+            const data = {
+                summary: document.getElementById(`${scenarioId}-summary`).value,
+                severity: document.getElementById(`${scenarioId}-severity`).value,
+                source: document.getElementById(`${scenarioId}-source`).value,
+                custom_details: {}
+            };
+            document.querySelectorAll(`#${scenarioId} .field`).forEach(field => {
+                const label = field.querySelector('label');
+                const input = field.querySelector('input:last-of-type, select');
+                if (label && input) {
+                    const key = label.textContent.replace(':', '').trim().toLowerCase();
+                    data[key] = input.value;
+                }
+            });
+            const customDetailsContainer = document.getElementById(`${scenarioId}-custom-details`);
+            if (customDetailsContainer.style.display !== 'none') {
+                customDetailsContainer.querySelectorAll('.custom-field').forEach(field => {
+                    const label = field.querySelector('label');
+                    const input = field.querySelector('input:last-of-type');
+                    if (label && input) {
+                        const key = label.textContent.replace(':', '').trim();
+                        data.custom_details[key] = input.value;
+                    }
+                });
+            }
+            return data;
+        }
+
+        function removeField(fieldId) {
+            document.getElementById(fieldId).remove();
+        }
+
+        function toggleDedupKeyField() {
+            const eventAction = document.getElementById('event_action').value;
+            document.getElementById('dedup-key-field').style.display =
+                (eventAction === 'acknowledge' || eventAction === 'resolve') ? 'flex' : 'none';
+        }
+
+        function sendEvents() {
+            const routingKey = document.getElementById('routing_key').value;
+            const eventAction = document.getElementById('event_action').value;
+            const client = document.getElementById('client').value;
+            const dedupKey = document.getElementById('dedup_key').value;
+            const scenarios = document.querySelectorAll('.scenario');
+            const events = Array.from(scenarios).map(scenario => {
+                const scenarioData = getScenarioData(scenario.id);
+                const payload = {
+                    routing_key: routingKey,
+                    event_action: eventAction,
+                    client: client,
+                    client_url: "https://jplassnibatt.github.io/pd_events/",
+                    payload: scenarioData
+                };
+                if (eventAction === 'acknowledge' || eventAction === 'resolve') {
+                    payload.dedup_key = dedupKey;
+                }
+                return fetch('https://events.pagerduty.com/v2/enqueue', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                }).then(response => response.json())
+                  .then(data => ({ scenarioData, response: data }));
+            });
+
+            Promise.all(events)
+                .then(results => {
+                    let resultHtml = `<h3>Events Sent Successfully</h3>
+                                      <p><strong>Event Action:</strong> ${eventAction}</p>`;
+                    results.forEach((result, index) => {
+                        resultHtml += `
+                            <div class="event-result">
+                                <h4>Scenario ${index + 1}</h4>
+                                <p><strong>Summary:</strong> ${result.scenarioData.summary}</p>
+                                <p><strong>Dedup Key:</strong> ${result.response.dedup_key}</p>
+                                <p><strong>Status:</strong> ${result.response.status}</p>
+                            </div>
+                        `;
+                    });
+                    document.getElementById('result').innerHTML = resultHtml;
+                })
+                .catch(error => {
+                    document.getElementById('result').innerHTML = '<h3>Error Sending Events</h3><p>' + error + '</p>';
+                });
+        }
+
+        function showPayload() {
+            const payloads = generatePayloads();
+            const formattedPayload = JSON.stringify(payloads, null, 2);
+            document.getElementById('result').innerHTML = `
+                <h3>Payload Preview</h3>
+                <div class="payload-actions">
+                    <div class="button-group">
+                        <button id="reloadPayloadBtn" onclick="showPayload()">Reload Payload</button>
+                        <button id="downloadShellScriptBtn" onclick="downloadShellScript()">Download Shell Script</button>
+                    </div>
+                    <span class="download-info">Download a shell script to send these events via command line</span>
+                </div>
+                <pre>${formattedPayload}</pre>
+            `;
+            document.getElementById('showPayloadBtn').style.display = 'none';
+            document.getElementById('hidePayloadBtn').style.display = 'inline-block';
+        }
+
+        function hidePayload() {
+            document.getElementById('result').innerHTML = '';
+            document.getElementById('showPayloadBtn').style.display = 'inline-block';
+            document.getElementById('hidePayloadBtn').style.display = 'none';
+        }
+
+        function generatePayloads() {
+            const routingKey = document.getElementById('routing_key').value;
+            const eventAction = document.getElementById('event_action').value;
+            const client = document.getElementById('client').value;
+            const dedupKey = document.getElementById('dedup_key').value;
+            return Array.from(document.querySelectorAll('.scenario')).map(scenario => {
+                const scenarioData = getScenarioData(scenario.id);
+                const payload = {
+                    routing_key: routingKey,
+                    event_action: eventAction,
+                    client: client,
+                    client_url: "https://jplassnibatt.github.io/pd_events/",
+                    payload: scenarioData
+                };
+                if (eventAction === 'acknowledge' || eventAction === 'resolve') {
+                    payload.dedup_key = dedupKey;
+                }
+                return payload;
+            });
+        }
+
+        function downloadShellScript() {
+            const payloads = generatePayloads();
+            let scriptContent = '#!/bin/bash\n\n';
+            payloads.forEach((payload, index) => {
+                const curlCommand = `curl -X POST https://events.pagerduty.com/v2/enqueue \\
+             -H 'Content-Type: application/json' \\
+             -d '${JSON.stringify(payload)}'\n\n`;
+                scriptContent += `echo "Sending event ${index + 1}..."\n${curlCommand}echo "Event ${index + 1} sent."\n\n`;
+            });
+            const blob = new Blob([scriptContent], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const currentDate = new Date().toISOString().slice(0, 10).replace(/-/g, '');
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `send_pagerduty_events-${currentDate}.sh`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        function addChangeListeners() {
+            document.querySelectorAll('input, select').forEach(input => {
+                input.addEventListener('change', () => {
+                    // Removed condition for showing reload button as it's always visible in payload preview
+                });
+            });
+        }
+
+        // Add an initial scenario
+        addScenario();
+        document.addEventListener('DOMContentLoaded', () => {
+            addChangeListeners();
+            toggleDedupKeyField();
+        });
+    </script>
+</body>
+</html>
