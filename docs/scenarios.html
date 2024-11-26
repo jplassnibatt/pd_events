@@ -111,6 +111,21 @@
         .bug-report {margin-top:40px;padding:10px;text-align:center;font-size:0.9em;border-top:1px solid #a8dadc;}
         .bug-report a {color:#457b9d;text-decoration:none;}
         .bug-report a:hover {text-decoration:underline;}
+        .error-message {
+            background-color: #ffebee;
+            color: #c62828;
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 10px;
+            border: 1px solid #ef9a9a;
+        }
+        .error-list {
+            list-style-type: none;
+            padding-left: 0;
+        }
+        .error-list li {
+            margin-bottom: 5px;
+        }
     </style>
 </head>
 <body>
@@ -431,9 +446,12 @@
                 errors.push('Dedup Key is mandatory for acknowledge and resolve actions.');
             }
 
+            if (scenarios.length === 0) {
+                errors.push('At least one scenario is required.');
+            }
+
             if (errors.length > 0) {
-                document.getElementById('result').innerHTML = '<h3>Error</h3><ul>' +
-                    errors.map(error => `<li>${error}</li>`).join('') + '</ul>';
+                displayErrors(errors);
                 return;
             }
 
@@ -469,27 +487,72 @@
 
             Promise.all(events)
                 .then(results => {
-                    let resultHtml = `<h3>Events Sent Successfully</h3>
-                                      <p><strong>Event Action:</strong> ${eventAction}</p>`;
-                    results.forEach((result, index) => {
-                        resultHtml += `
-                            <div class="event-result">
-                                <h4>Scenario ${index + 1}</h4>
-                                <p><strong>Summary:</strong> ${result.scenarioData.summary}</p>
-                                <p><strong>Dedup Key:</strong> ${result.response.dedup_key}</p>
-                                <p><strong>Status:</strong> ${result.response.status}</p>
-                            </div>
-                        `;
-                    });
-                    document.getElementById('result').innerHTML = resultHtml;
+                    displaySuccessResults(results, eventAction);
                 })
                 .catch(error => {
-                    let errorMessage = error.message;
-                    if (errorMessage.includes('Invalid routing key')) {
-                        errorMessage = 'The routing key is invalid. Please check your routing key and try again.';
-                    }
-                    document.getElementById('result').innerHTML = `<h3>Error Sending Events</h3><p>${errorMessage}</p>`;
+                    displayError(error.message);
                 });
+        }
+
+        function displayErrors(errors) {
+            const resultElement = document.getElementById('result');
+            resultElement.innerHTML = `
+                <div class="error-message">
+                    <h3>Error</h3>
+                    <ul class="error-list">
+                        ${errors.map(error => `<li>${error}</li>`).join('')}
+                    </ul>
+                </div>
+            `;
+        }
+
+        function displayError(errorMessage) {
+            let friendlyMessage = errorMessage;
+
+            if (errorMessage.includes("'payload.severity' is invalid")) {
+                friendlyMessage = "Oops! It looks like the severity level you've chosen isn't quite right. Please make sure you've selected one of these options: 'critical', 'warning', 'error', or 'info'.";
+            } else if (errorMessage.includes("'payload.severity' is missing or blank")) {
+                friendlyMessage = "Hmm, we seem to be missing the severity level. Please make sure you've selected one of these options: 'critical', 'warning', 'error', or 'info'.";
+            } else if (errorMessage.includes('Invalid routing key')) {
+                friendlyMessage = "The routing key doesn't seem to be correct. Double-check it and give it another try!";
+            } else if (errorMessage.includes('API error:')) {
+                // For other API errors, try to extract and display the error message
+                try {
+                    const apiError = JSON.parse(errorMessage.replace('API error:', ''));
+                    if (apiError.errors && apiError.errors.length > 0) {
+                        friendlyMessage = `Oops! Something went wrong: ${apiError.errors[0]}`;
+                    } else if (apiError.message) {
+                        friendlyMessage = `Oops! Something went wrong: ${apiError.message}`;
+                    }
+                } catch (e) {
+                    // If parsing fails, use a generic message
+                    friendlyMessage = "Oops! Something went wrong when sending the event. Please check your inputs and try again.";
+                }
+            }
+
+            const resultElement = document.getElementById('result');
+            resultElement.innerHTML = `
+                <div class="error-message">
+                    <h3>Error Sending Events</h3>
+                    <p>${friendlyMessage}</p>
+                </div>
+            `;
+        }
+
+        function displaySuccessResults(results, eventAction) {
+            let resultHtml = `<h3>Events Sent Successfully</h3>
+                              <p><strong>Event Action:</strong> ${eventAction}</p>`;
+            results.forEach((result, index) => {
+                resultHtml += `
+                    <div class="event-result">
+                        <h4>Scenario ${index + 1}</h4>
+                        <p><strong>Summary:</strong> ${result.scenarioData.summary}</p>
+                        <p><strong>Dedup Key:</strong> ${result.response.dedup_key}</p>
+                        <p><strong>Status:</strong> ${result.response.status}</p>
+                    </div>
+                `;
+            });
+            document.getElementById('result').innerHTML = resultHtml;
         }
 
         function showPayload() {
