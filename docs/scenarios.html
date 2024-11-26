@@ -56,10 +56,9 @@
         .scenario-type-container {flex-grow:1;display:flex;align-items:center;}
         .scenario-type {
             width: auto;
-            min-width: 150px; /* Adjust this value as needed */
-            max-width: 250px; /* Add a max-width to prevent it from becoming too wide */
+            min-width: 150px;
+            max-width: 250px;
         }
-
         #scenarios-container select[id$="-severity"] {
             width: auto;
             min-width: 100px;
@@ -88,21 +87,6 @@
           cursor: pointer;
           text-align: center;}
         .toggle-custom-details:hover {background-color: #666666;}
-        .add-field {
-            display: block;
-            width: auto;
-            margin-top: 10px;
-            margin-bottom: 10px;
-            padding: 5px 10px;
-            background-color: #699DA0;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            text-align: center;
-            /* font-size: 14px; */
-        }
-        .add-field:hover {background-color: #4F7D7F;}
         .add-customfield {
             display: block;
             width: auto;
@@ -115,7 +99,6 @@
             border-radius: 4px;
             cursor: pointer;
             text-align: center;
-            /* font-size: 14px; */
         }
         .add-customfield:hover {background-color: #676769;}
         .scenario-actions {margin-top: 15px;}
@@ -277,15 +260,16 @@
                             <button class="remove-field" onclick="removeField('${scenarioId}-class-field')">x</button>
                         </div>
                         <div id="${scenarioId}-extra-fields"></div>
-                        <button class="add-field" onclick="addCustomField('${scenarioId}')">Add Field</button>
                         <button class="toggle-custom-details" onclick="toggleCustomFields('${scenarioId}')">Add Custom Details for Scenario ${scenarioCount}</button>
                         <div id="${scenarioId}-custom-details" class="custom-details" style="display: none;"></div>
-                    `;
-                    container.insertAdjacentHTML('beforeend', scenarioHtml);
-                    updateScenarioFields(scenarioId);
-                    addListenersToElement(document.getElementById(scenarioId));
-                    updatePayload();
-                }
+                    </div>
+                </div>
+            `;
+            container.insertAdjacentHTML('beforeend', scenarioHtml);
+            updateScenarioFields(scenarioId);
+            addListenersToElement(document.getElementById(scenarioId));
+            updatePayload();
+        }
 
         function removeScenario(scenarioId) {
             document.getElementById(scenarioId).remove();
@@ -298,13 +282,11 @@
                 const number = index + 1;
                 scenario.querySelector('.scenario-number').textContent = number;
 
-                // Update custom details title
                 const scenarioId = scenario.id;
                 const type = document.getElementById(`${scenarioId}-type`).value;
                 const template = scenarioTemplates[type];
                 updateCustomFields(scenarioId, template.customDetails);
 
-                // Update toggle button text
                 const toggleButton = scenario.querySelector('.toggle-custom-details');
                 const customDetailsContainer = document.getElementById(`${scenarioId}-custom-details`);
                 const isHidden = customDetailsContainer.style.display === 'none';
@@ -329,7 +311,6 @@
             const container = document.getElementById(`${scenarioId}-custom-details`);
             const scenarioNumber = document.querySelector(`#${scenarioId} .scenario-number`).textContent;
 
-            // Update the title with the correct scenario number
             container.innerHTML = `<h3>Custom Details for Scenario ${scenarioNumber}</h3>`;
 
             Object.entries(customDetails).forEach(([key, value]) => {
@@ -363,29 +344,6 @@
             }
 
             updatePayload();
-        }
-
-        function addCustomField(scenarioId) {
-            const container = document.getElementById(`${scenarioId}-extra-fields`);
-            const fieldCount = container.children.length + 1;
-            const fieldId = `${scenarioId}-extra-field-${fieldCount}`;
-            container.insertAdjacentHTML('beforeend', `
-                <div id="${fieldId}" class="field">
-                    <label for="${fieldId}-value">
-                        <input type="text" placeholder="Field name" onchange="updateFieldLabel('${fieldId}')">
-                    </label>
-                    <input type="text" id="${fieldId}-value" placeholder="Field value">
-                    <button class="remove-field" onclick="removeField('${fieldId}')">x</button>
-                </div>
-            `);
-            addListenersToElement(document.getElementById(fieldId));
-            updatePayload();
-        }
-
-        function updateFieldLabel(fieldId) {
-            const field = document.getElementById(fieldId);
-            const labelInput = field.querySelector('label input');
-            field.querySelector('label').textContent = labelInput.value + ':';
         }
 
         function addCustomDetailField(scenarioId) {
@@ -472,7 +430,6 @@
         }
 
         function sendEvents() {
-            // Reset payload visibility state
             hidePayload();
 
             const routingKey = document.getElementById('routing_key').value.trim();
@@ -500,7 +457,6 @@
                 return;
             }
 
-            // Clear previous errors and results
             document.getElementById('error-container').innerHTML = '';
             document.getElementById('result').innerHTML = '';
 
@@ -553,7 +509,7 @@
                     </ul>
                 </div>
             `;
-            document.getElementById('result').innerHTML = ''; // Clear the result box
+            document.getElementById('result').innerHTML = '';
         }
 
         function displayError(errorMessage) {
@@ -585,11 +541,11 @@
                     <p>${friendlyMessage}</p>
                 </div>
             `;
-            document.getElementById('result').innerHTML = ''; // Clear the result box
+            document.getElementById('result').innerHTML = '';
         }
 
         function displaySuccessResults(results, eventAction) {
-            document.getElementById('error-container').innerHTML = ''; // Clear any previous errors
+            document.getElementById('error-container').innerHTML = '';
             let resultHtml = `<h3>Events Sent Successfully</h3>
                               <p><strong>Event Action:</strong> ${eventAction}</p>`;
             results.forEach((result, index) => {
@@ -620,14 +576,14 @@
             payloadPreviewElement.querySelector('.payload-preview').textContent = formattedPayload;
             document.getElementById('showPayloadBtn').style.display = 'none';
             document.getElementById('hidePayloadBtn').style.display = 'inline-block';
-            document.getElementById('error-container').innerHTML = ''; // Clear any previous errors
+            document.getElementById('error-container').innerHTML = '';
         }
 
         function hidePayload() {
             document.getElementById('payload-preview').style.display = 'none';
             document.getElementById('showPayloadBtn').style.display = 'inline-block';
             document.getElementById('hidePayloadBtn').style.display = 'none';
-            document.getElementById('error-container').innerHTML = ''; // Clear any error messages
+            document.getElementById('error-container').innerHTML = '';
         }
 
         function generatePayloads() {
@@ -663,7 +619,6 @@
             const blob = new Blob([scriptContent], { type: 'text/plain' });
             const url = URL.createObjectURL(blob);
 
-            // Generate filename with current date and time
             const now = new Date();
             const year = now.getFullYear();
             const month = String(now.getMonth() + 1).padStart(2, '0');
@@ -699,7 +654,7 @@
                 showPayload();
             }
         }
-        // Add an initial scenario
+
         addScenario();
         document.addEventListener('DOMContentLoaded', () => {
             addChangeListeners();
