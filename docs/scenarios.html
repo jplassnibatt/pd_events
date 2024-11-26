@@ -221,18 +221,14 @@
                         </div>
                         <div id="${scenarioId}-extra-fields"></div>
                         <button class="add-field" onclick="addCustomField('${scenarioId}')">Add Field</button>
-                        <button class="toggle-custom-details" onclick="toggleCustomFields('${scenarioId}')">Add Custom Details</button>
-                        <div id="${scenarioId}-custom-details" class="custom-details" style="display: none;">
-                            <h3>Custom Details</h3>
-                        </div>
-                    </div>
-                </div>
-            `;
-            container.insertAdjacentHTML('beforeend', scenarioHtml);
-            updateScenarioFields(scenarioId);
-            addListenersToElement(document.getElementById(scenarioId));
-            updatePayload();
-        }
+                        <button class="toggle-custom-details" onclick="toggleCustomFields('${scenarioId}')">Add Custom Details for Scenario ${scenarioCount}</button>
+                        <div id="${scenarioId}-custom-details" class="custom-details" style="display: none;"></div>
+                    `;
+                    container.insertAdjacentHTML('beforeend', scenarioHtml);
+                    updateScenarioFields(scenarioId);
+                    addListenersToElement(document.getElementById(scenarioId));
+                    updatePayload();
+                }
 
         function removeScenario(scenarioId) {
             document.getElementById(scenarioId).remove();
@@ -242,7 +238,22 @@
 
         function updateScenarioNumbers() {
             document.querySelectorAll('.scenario').forEach((scenario, index) => {
-                scenario.querySelector('.scenario-number').textContent = index + 1;
+                const number = index + 1;
+                scenario.querySelector('.scenario-number').textContent = number;
+
+                // Update custom details title
+                const scenarioId = scenario.id;
+                const type = document.getElementById(`${scenarioId}-type`).value;
+                const template = scenarioTemplates[type];
+                updateCustomFields(scenarioId, template.customDetails);
+
+                // Update toggle button text
+                const toggleButton = scenario.querySelector('.toggle-custom-details');
+                const customDetailsContainer = document.getElementById(`${scenarioId}-custom-details`);
+                const isHidden = customDetailsContainer.style.display === 'none';
+                toggleButton.textContent = isHidden
+                    ? `Add Custom Details for Scenario ${number}`
+                    : `Remove Custom Details from Scenario ${number}`;
             });
         }
 
@@ -259,7 +270,11 @@
 
         function updateCustomFields(scenarioId, customDetails) {
             const container = document.getElementById(`${scenarioId}-custom-details`);
-            container.innerHTML = '<h3>Custom Details</h3>';
+            const scenarioNumber = document.querySelector(`#${scenarioId} .scenario-number`).textContent;
+
+            // Update the title with the correct scenario number
+            container.innerHTML = `<h3>Custom Details for Scenario ${scenarioNumber}</h3>`;
+
             Object.entries(customDetails).forEach(([key, value]) => {
                 container.insertAdjacentHTML('beforeend', `
                     <div class="custom-field">
@@ -279,9 +294,12 @@
             const container = document.getElementById(`${scenarioId}-custom-details`);
             const toggleButton = container.previousElementSibling;
             const isHidden = container.style.display === 'none';
+            const scenarioNumber = document.querySelector(`#${scenarioId} .scenario-number`).textContent;
 
             container.style.display = isHidden ? 'block' : 'none';
-            toggleButton.textContent = isHidden ? 'Remove Custom Details Section' : 'Add Custom Details';
+            toggleButton.textContent = isHidden
+                ? `Remove Custom Details from Scenario ${scenarioNumber}`
+                : `Add Custom Details for Scenario ${scenarioNumber}`;
 
             if (isHidden) {
                 addListenersToElement(container);
