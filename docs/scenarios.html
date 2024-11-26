@@ -606,6 +606,12 @@
         }
 
         function showPayload() {
+            const routingKey = document.getElementById('routing_key').value.trim();
+            if (!routingKey) {
+                displayError("Routing Key is required to show the payload.");
+                return;
+            }
+
             const payloads = generatePayloads();
             const formattedPayload = JSON.stringify(payloads, null, 2);
             const payloadPreviewElement = document.getElementById('payload-preview');
@@ -614,12 +620,14 @@
             payloadPreviewElement.querySelector('.payload-preview').textContent = formattedPayload;
             document.getElementById('showPayloadBtn').style.display = 'none';
             document.getElementById('hidePayloadBtn').style.display = 'inline-block';
+            document.getElementById('error-container').innerHTML = ''; // Clear any previous errors
         }
 
         function hidePayload() {
             document.getElementById('payload-preview').style.display = 'none';
             document.getElementById('showPayloadBtn').style.display = 'inline-block';
             document.getElementById('hidePayloadBtn').style.display = 'none';
+            document.getElementById('error-container').innerHTML = ''; // Clear any error messages
         }
 
         function generatePayloads() {
