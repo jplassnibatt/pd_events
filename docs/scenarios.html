@@ -31,8 +31,8 @@
         pre {background-color:#f8f9fa;border:1px solid #e9ecef;border-radius:4px;padding:10px;white-space:pre-wrap;word-wrap:break-word;font-family:monospace;font-size:14px;max-height:400px;overflow-y:auto;}
         #downloadShellScriptBtn {background-color:#17a2b8;margin-left:10px;}
         #downloadShellScriptBtn:hover {background-color:#138496;}
-        #reloadPayloadBtn,#hidePayloadBtn,#showPayloadBtn {background-color:#6c757d;color:white;padding:5px 10px;border:none;border-radius:3px;cursor:pointer;margin-bottom:10px;}
-        #reloadPayloadBtn:hover,#hidePayloadBtn:hover,#showPayloadBtn:hover {background-color:#5a6268;}
+        #hidePayloadBtn,#showPayloadBtn {background-color:#6c757d;color:white;padding:5px 10px;border:none;border-radius:3px;cursor:pointer;margin-bottom:10px;}
+        #hidePayloadBtn:hover,#showPayloadBtn:hover {background-color:#5a6268;}
         .bold-select {font-weight:bold;-webkit-appearance:none;-moz-appearance:none;appearance:none;background-image:url("data:image/svg+xml;utf8,<svg fill='black' height='24' viewBox='0 0 24 24' width='24' xmlns='http://www.w3.org/2000/svg'><path d='M7 10l5 5 5-5z'/><path d='M0 0h24v24H0z' fill='none'/></svg>");background-repeat:no-repeat;background-position-x:100%;background-position-y:5px;padding-right:25px;}
         .colored-header {background-color:#a8dadc;padding:10px;border-radius:5px 5px 0 0;display:flex;align-items:center;justify-content:space-between;}
         #sendEventsBtn {background-color:#F36A00;padding:12px 24px;font-size:18px;font-weight:bold;}
@@ -164,12 +164,14 @@
             `;
             container.insertAdjacentHTML('beforeend', scenarioHtml);
             updateScenarioFields(scenarioId);
-            addChangeListeners();
+            addListenersToElement(document.getElementById(scenarioId));
+            updatePayload();
         }
 
         function removeScenario(scenarioId) {
             document.getElementById(scenarioId).remove();
             updateScenarioNumbers();
+            updatePayload();
         }
 
         function updateScenarioNumbers() {
@@ -186,6 +188,7 @@
                 if (el) el.value = template[field];
             });
             updateCustomFields(scenarioId, template.customDetails);
+            updatePayload();
         }
 
         function updateCustomFields(scenarioId, customDetails) {
@@ -212,10 +215,12 @@
             if (container.style.display === 'none') {
                 container.style.display = 'block';
                 toggleButton.textContent = 'Remove Custom Details';
+                addListenersToElement(container);
             } else {
                 container.style.display = 'none';
                 toggleButton.textContent = 'Add Custom Details';
             }
+            updatePayload();
         }
 
         function addCustomField(scenarioId) {
@@ -231,6 +236,8 @@
                     <button class="remove-field" onclick="removeField('${fieldId}')">x</button>
                 </div>
             `);
+            addListenersToElement(document.getElementById(fieldId));
+            updatePayload();
         }
 
         function updateFieldLabel(fieldId) {
@@ -252,6 +259,8 @@
                     <button class="remove-field" onclick="removeCustomField('${scenarioId}', '${fieldId}')">x</button>
                 </div>
             `);
+            addListenersToElement(document.getElementById(fieldId));
+            updatePayload();
         }
 
         function updateCustomFieldLabel(fieldId) {
@@ -265,6 +274,7 @@
             const field = container.querySelector(`#${fieldIdOrName}`) ||
                           container.querySelector(`.custom-field:has(#${scenarioId}-${fieldIdOrName})`);
             if (field) field.remove();
+            updatePayload();
         }
 
         function getScenarioData(scenarioId) {
@@ -310,6 +320,7 @@
 
         function removeField(fieldId) {
             document.getElementById(fieldId).remove();
+            updatePayload();
         }
 
         function toggleDedupKeyField() {
@@ -399,17 +410,22 @@
         function showPayload() {
             const payloads = generatePayloads();
             const formattedPayload = JSON.stringify(payloads, null, 2);
-            document.getElementById('result').innerHTML = `
-                <h3>Payload Preview</h3>
-                <div class="payload-actions">
-                    <div class="button-group">
-                        <button id="reloadPayloadBtn" onclick="showPayload()">Reload Payload</button>
-                        <button id="downloadShellScriptBtn" onclick="downloadShellScript()">Download Shell Script</button>
+            const resultElement = document.getElementById('result');
+
+            if (!resultElement.querySelector('.payload-preview')) {
+                resultElement.innerHTML = `
+                    <h3>Payload Preview</h3>
+                    <div class="payload-actions">
+                        <div class="button-group">
+                            <button id="downloadShellScriptBtn" onclick="downloadShellScript()">Download Shell Script</button>
+                        </div>
+                        <span class="download-info">Download a shell script to send these events via command line</span>
                     </div>
-                    <span class="download-info">Download a shell script to send these events via command line</span>
-                </div>
-                <pre>${formattedPayload}</pre>
-            `;
+                    <pre class="payload-preview"></pre>
+                `;
+            }
+
+            resultElement.querySelector('.payload-preview').textContent = formattedPayload;
             document.getElementById('showPayloadBtn').style.display = 'none';
             document.getElementById('hidePayloadBtn').style.display = 'inline-block';
         }
@@ -446,16 +462,26 @@
             let scriptContent = '#!/bin/bash\n\n';
             payloads.forEach((payload, index) => {
                 const curlCommand = `curl -X POST https://events.pagerduty.com/v2/enqueue \\
-             -H 'Content-Type: application/json' \\
-             -d '${JSON.stringify(payload)}'\n\n`;
+                 -H 'Content-Type: application/json' \\
+                 -d '${JSON.stringify(payload)}'\n\n`;
                 scriptContent += `echo "Sending event ${index + 1}..."\n${curlCommand}echo "Event ${index + 1} sent."\n\n`;
             });
             const blob = new Blob([scriptContent], { type: 'text/plain' });
             const url = URL.createObjectURL(blob);
-            const currentDate = new Date().toISOString().slice(0, 10).replace(/-/g, '');
+
+            // Generate filename with current date and time
+            const now = new Date();
+            const year = now.getFullYear();
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            const day = String(now.getDate()).padStart(2, '0');
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            const seconds = String(now.getSeconds()).padStart(2, '0');
+            const filename = `send_pagerduty_events-${year}${month}${day}-${hours}${minutes}${seconds}.sh`;
+
             const a = document.createElement('a');
             a.href = url;
-            a.download = `send_pagerduty_events-${currentDate}.sh`;
+            a.download = filename;
             document.body.appendChild(a);
             a.click();
             document.body.removeChild(a);
@@ -463,13 +489,22 @@
         }
 
         function addChangeListeners() {
-            document.querySelectorAll('input, select').forEach(input => {
-                input.addEventListener('change', () => {
-                    // Removed condition for showing reload button as it's always visible in payload preview
-                });
+            addListenersToElement(document);
+        }
+
+        function addListenersToElement(element) {
+            element.querySelectorAll('input, select').forEach(input => {
+                input.addEventListener('change', updatePayload);
+                input.addEventListener('input', updatePayload);
             });
         }
 
+        function updatePayload() {
+            const hidePayloadBtn = document.getElementById('hidePayloadBtn');
+            if (hidePayloadBtn && hidePayloadBtn.style.display === 'inline-block') {
+                showPayload();
+            }
+        }
         // Add an initial scenario
         addScenario();
         document.addEventListener('DOMContentLoaded', () => {
