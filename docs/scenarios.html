@@ -358,8 +358,14 @@
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify(payload)
-                    }).then(response => response.json())
-                      .then(data => ({ scenarioData, response: data }));
+                    }).then(response => {
+                        if (!response.ok) {
+                            return response.text().then(text => {
+                                throw new Error(`API error: ${text}`);
+                            });
+                        }
+                        return response.json();
+                    }).then(data => ({ scenarioData, response: data }));
                 } catch (error) {
                     return Promise.reject(error);
                 }
@@ -382,7 +388,11 @@
                     document.getElementById('result').innerHTML = resultHtml;
                 })
                 .catch(error => {
-                    document.getElementById('result').innerHTML = '<h3>Error Sending Events</h3><p>' + error.message + '</p>';
+                    let errorMessage = error.message;
+                    if (errorMessage.includes('Invalid routing key')) {
+                        errorMessage = 'The routing key is invalid. Please check your routing key and try again.';
+                    }
+                    document.getElementById('result').innerHTML = `<h3>Error Sending Events</h3><p>${errorMessage}</p>`;
                 });
         }
 
