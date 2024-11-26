@@ -29,10 +29,14 @@
         .toggle-custom-details,.add-field {background-color:#2a9d8f;color:white;padding:5px 10px;border:none;border-radius:3px;cursor:pointer;margin-top:10px;}
         h2 .subtext {font-size:0.6em;font-weight:normal;color:#666;}
         pre {background-color:#f8f9fa;border:1px solid #e9ecef;border-radius:4px;padding:10px;white-space:pre-wrap;word-wrap:break-word;font-family:monospace;font-size:14px;max-height:400px;overflow-y:auto;}
-        #downloadShellScriptBtn {background-color:#17a2b8;margin-left:10px;}
+        #downloadShellScriptBtn {background-color: #17a2b8;color: white;padding: 10px 15px;border: none;border-radius: 5px;cursor: pointer;margin-right: 15px;white-space: nowrap;}
+        @media (max-width: 600px) {.button-group {flex-direction: column;align-items: flex-start;} #downloadShellScriptBtn {margin-bottom: 10px;}}
         #downloadShellScriptBtn:hover {background-color:#138496;}
         #hidePayloadBtn,#showPayloadBtn {background-color:#6c757d;color:white;padding:5px 10px;border:none;border-radius:3px;cursor:pointer;margin-bottom:10px;}
         #hidePayloadBtn:hover,#showPayloadBtn:hover {background-color:#5a6268;}
+        .download-info {font-size: 0.9em;color: #6c757d;margin-left:-10px;}
+        .payload-actions {margin-bottom: 15px;}
+        .button-group {display: flex;align-items: center;flex-wrap: wrap;}
         .bold-select {font-weight:bold;-webkit-appearance:none;-moz-appearance:none;appearance:none;background-image:url("data:image/svg+xml;utf8,<svg fill='black' height='24' viewBox='0 0 24 24' width='24' xmlns='http://www.w3.org/2000/svg'><path d='M7 10l5 5 5-5z'/><path d='M0 0h24v24H0z' fill='none'/></svg>");background-repeat:no-repeat;background-position-x:100%;background-position-y:5px;padding-right:25px;}
         .colored-header {background-color:#a8dadc;padding:10px;border-radius:5px 5px 0 0;display:flex;align-items:center;justify-content:space-between;}
         #sendEventsBtn {background-color:#F36A00;padding:12px 24px;font-size:18px;font-weight:bold;}
@@ -418,8 +422,8 @@
                     <div class="payload-actions">
                         <div class="button-group">
                             <button id="downloadShellScriptBtn" onclick="downloadShellScript()">Download Shell Script</button>
+                            <span class="download-info">Download a shell script to send these events via command line</span>
                         </div>
-                        <span class="download-info">Download a shell script to send these events via command line</span>
                     </div>
                     <pre class="payload-preview"></pre>
                 `;
