@@ -268,10 +268,22 @@
         }
 
         function getScenarioData(scenarioId) {
+            const summary = document.getElementById(`${scenarioId}-summary`).value.trim();
+            const source = document.getElementById(`${scenarioId}-source`).value.trim();
+            const scenarioNumber = document.querySelector(`#${scenarioId} .scenario-number`).textContent;
+
+            const missingFields = [];
+            if (!summary) missingFields.push('Summary');
+            if (!source) missingFields.push('Source');
+
+            if (missingFields.length > 0) {
+                throw new Error(`Scenario ${scenarioNumber}: ${missingFields.join(' and ')} ${missingFields.length > 1 ? 'are' : 'is'} mandatory.`);
+            }
+
             const data = {
-                summary: document.getElementById(`${scenarioId}-summary`).value,
+                summary: summary,
                 severity: document.getElementById(`${scenarioId}-severity`).value,
-                source: document.getElementById(`${scenarioId}-source`).value,
+                source: source,
                 custom_details: {}
             };
             document.querySelectorAll(`#${scenarioId} .field`).forEach(field => {
@@ -307,29 +319,50 @@
         }
 
         function sendEvents() {
-            const routingKey = document.getElementById('routing_key').value;
+            const routingKey = document.getElementById('routing_key').value.trim();
             const eventAction = document.getElementById('event_action').value;
             const client = document.getElementById('client').value;
-            const dedupKey = document.getElementById('dedup_key').value;
+            const dedupKey = document.getElementById('dedup_key').value.trim();
             const scenarios = document.querySelectorAll('.scenario');
+
+            let errors = [];
+
+            if (!routingKey) {
+                errors.push('Routing Key is mandatory.');
+            }
+
+            if ((eventAction === 'acknowledge' || eventAction === 'resolve') && !dedupKey) {
+                errors.push('Dedup Key is mandatory for acknowledge and resolve actions.');
+            }
+
+            if (errors.length > 0) {
+                document.getElementById('result').innerHTML = '<h3>Error</h3><ul>' +
+                    errors.map(error => `<li>${error}</li>`).join('') + '</ul>';
+                return;
+            }
+
             const events = Array.from(scenarios).map(scenario => {
-                const scenarioData = getScenarioData(scenario.id);
-                const payload = {
-                    routing_key: routingKey,
-                    event_action: eventAction,
-                    client: client,
-                    client_url: "https://jplassnibatt.github.io/pd_events/",
-                    payload: scenarioData
-                };
-                if (eventAction === 'acknowledge' || eventAction === 'resolve') {
-                    payload.dedup_key = dedupKey;
+                try {
+                    const scenarioData = getScenarioData(scenario.id);
+                    const payload = {
+                        routing_key: routingKey,
+                        event_action: eventAction,
+                        client: client,
+                        client_url: "https://jplassnibatt.github.io/pd_events/",
+                        payload: scenarioData
+                    };
+                    if (eventAction === 'acknowledge' || eventAction === 'resolve') {
+                        payload.dedup_key = dedupKey;
+                    }
+                    return fetch('https://events.pagerduty.com/v2/enqueue', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    }).then(response => response.json())
+                      .then(data => ({ scenarioData, response: data }));
+                } catch (error) {
+                    return Promise.reject(error);
                 }
-                return fetch('https://events.pagerduty.com/v2/enqueue', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                }).then(response => response.json())
-                  .then(data => ({ scenarioData, response: data }));
             });
 
             Promise.all(events)
@@ -349,7 +382,7 @@
                     document.getElementById('result').innerHTML = resultHtml;
                 })
                 .catch(error => {
-                    document.getElementById('result').innerHTML = '<h3>Error Sending Events</h3><p>' + error + '</p>';
+                    document.getElementById('result').innerHTML = '<h3>Error Sending Events</h3><p>' + error.message + '</p>';
                 });
         }
 
