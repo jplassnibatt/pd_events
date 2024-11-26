@@ -484,7 +484,7 @@
             let errors = [];
 
             if (!routingKey) {
-                errors.push('Routing Key is mandatory. This is your Event Orchestration or Service Integration Key');
+                errors.push('Routing Key is mandatory. This is your Event Orchestration or Service Integration Key.');
             }
 
             if ((eventAction === 'acknowledge' || eventAction === 'resolve') && !dedupKey) {
