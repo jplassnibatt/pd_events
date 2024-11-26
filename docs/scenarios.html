@@ -92,10 +92,10 @@
 
     <script>
         const scenarioTemplates = {
-            database: {summary:"High latency and connection timeouts in primary database cluster",severity:"critical",source:"db-cluster-01.us-east-1.com",component:"PostgreSQL",group:"Database Infrastructure",class:"Performance Degradation",customDetails:{db_name:"primary_cluster",connection_count:"500",avg_query_time:"2.5s"}},
-            cpu: {summary:"Excessive CPU usage detected on production web server",severity:"critical",source:"web-server-05.us-east-2.com",component:"Apache Web Server",group:"Web Infrastructure",class:"Resource Exhaustion",customDetails:{cpu_usage:"95%",process_count:"250",load_average:"8.5"}},
-            disk: {summary:"Critical disk space shortage on file server",severity:"critical",source:"file-server-03.us-east-3.com",component:"Storage System",group:"Storage Infrastructure",class:"Capacity",customDetails:{disk_usage:"98%",free_space:"20GB",affected_partition:"/dev/sda1"}},
             application: {summary:"Application unresponsive - multiple user reports",severity:"error",source:"app-server-02.us-east-4.com",component:"E-commerce Application",group:"Application Stack",class:"Availability",customDetails:{error_rate:"15%",response_time:"10s",affected_users:"500+"}},
+            cpu: {summary:"Excessive CPU usage detected on production web server",severity:"critical",source:"web-server-05.us-east-2.com",component:"Apache Web Server",group:"Web Infrastructure",class:"Resource Exhaustion",customDetails:{cpu_usage:"95%",process_count:"250",load_average:"8.5"}},
+            database: {summary:"High latency and connection timeouts in primary database cluster",severity:"critical",source:"db-cluster-01.us-east-1.com",component:"PostgreSQL",group:"Database Infrastructure",class:"Performance Degradation",customDetails:{db_name:"primary_cluster",connection_count:"500",avg_query_time:"2.5s"}},
+            disk: {summary:"Critical disk space shortage on file server",severity:"critical",source:"file-server-03.us-east-3.com",component:"Storage System",group:"Storage Infrastructure",class:"Capacity",customDetails:{disk_usage:"98%",free_space:"20GB",affected_partition:"/dev/sda1"}},
             login: {summary:"Multiple failed login attempts detected",severity:"error",source:"auth-server-01.us-west-1.com",component:"Authentication Service",group:"Login",class:"Security Threat",customDetails:{failed_attempts:"100+",affected_accounts:"25",source_ip:"192.168.1.100"}},
             network: {summary:"Network connectivity issues affecting multiple services",severity:"critical",source:"core-switch-01.us-west-2.com",component:"Core Network Infrastructure",group:"Network",class:"Connectivity",customDetails:{packet_loss:"25%",affected_vlans:"VLAN 10, VLAN 20",bandwidth_utilization:"90%"}}
         };
@@ -110,10 +110,10 @@
                         <span class="scenario-title">Scenario <span class="scenario-number">${scenarioCount}</span>:</span>
                         <div class="scenario-type-container">
                             <select id="${scenarioId}-type" class="scenario-type bold-select" onchange="updateScenarioFields('${scenarioId}')">
-                                <option value="database">Database Issues</option>
-                                <option value="cpu">CPU Issues</option>
-                                <option value="disk">Disk Issues</option>
                                 <option value="application">Application Issues</option>
+                                <option value="cpu">CPU Issues</option>
+                                <option value="database">Database Issues</option>
+                                <option value="disk">Disk Issues</option>
                                 <option value="login">Login Issues</option>
                                 <option value="network">Network Issues</option>
                             </select>
