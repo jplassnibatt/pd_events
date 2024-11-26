@@ -108,7 +108,7 @@
         .title-group {text-align:center;margin-bottom:20px;}
         .title-group h1 {margin-bottom:0.2em;font-size:2em;display:flex;align-items:baseline;justify-content:center;}
         .version {font-size:0.4em;font-weight:normal;color:#666;margin-left:10px;}
-        .bug-report {margin-top:40px;padding:10px;text-align:center;font-size:0.9em;border-top:1px solid #a8dadc;}
+        .bug-report {margin-top:20px;padding:10px;text-align:center;font-size:0.9em;border-top:1px solid #a8dadc;}
         .bug-report a {color:#457b9d;text-decoration:none;}
         .bug-report a:hover {text-decoration:underline;}
         .error-message {
@@ -116,7 +116,8 @@
             color: #c62828;
             padding: 10px;
             border-radius: 5px;
-            margin-bottom: 10px;
+            margin-bottom: -10px;
+            margin-top: 10px;
             border: 1px solid #ef9a9a;
         }
         .error-list {
@@ -165,7 +166,20 @@
     <button id="showPayloadBtn" onclick="showPayload()">Show Payload</button>
     <button id="hidePayloadBtn" onclick="hidePayload()" style="display: none;">Hide Payload</button>
 
+    <div id="error-container"></div>
+
     <div id="result"></div>
+
+    <div id="payload-preview" style="display: none;">
+        <h3>Payload Preview</h3>
+        <div class="payload-actions">
+            <div class="button-group">
+                <button id="downloadShellScriptBtn" onclick="downloadShellScript()">Download Shell Script</button>
+                <span class="download-info">Download a shell script with desired scenario(s) to send events via command line.</span>
+            </div>
+        </div>
+        <pre class="payload-preview"></pre>
+    </div>
 
     <div class="bug-report">
         <p>Found a bug? <a href="https://github.com/jplassnibatt/pd_events/issues" target="_blank" rel="noopener noreferrer">Open an issue on GitHub</a></p>
@@ -430,6 +444,9 @@
         }
 
         function sendEvents() {
+            // Reset payload visibility state
+            hidePayload();
+
             const routingKey = document.getElementById('routing_key').value.trim();
             const eventAction = document.getElementById('event_action').value;
             const client = document.getElementById('client').value;
@@ -454,6 +471,10 @@
                 displayErrors(errors);
                 return;
             }
+
+            // Clear previous errors and results
+            document.getElementById('error-container').innerHTML = '';
+            document.getElementById('result').innerHTML = '';
 
             const events = Array.from(scenarios).map(scenario => {
                 try {
@@ -495,8 +516,8 @@
         }
 
         function displayErrors(errors) {
-            const resultElement = document.getElementById('result');
-            resultElement.innerHTML = `
+            const errorContainer = document.getElementById('error-container');
+            errorContainer.innerHTML = `
                 <div class="error-message">
                     <h3>Error</h3>
                     <ul class="error-list">
@@ -504,6 +525,7 @@
                     </ul>
                 </div>
             `;
+            document.getElementById('result').innerHTML = ''; // Clear the result box
         }
 
         function displayError(errorMessage) {
@@ -516,7 +538,6 @@
             } else if (errorMessage.includes('Invalid routing key')) {
                 friendlyMessage = "The routing key doesn't seem to be correct. Double-check it and give it another try!";
             } else if (errorMessage.includes('API error:')) {
-                // For other API errors, try to extract and display the error message
                 try {
                     const apiError = JSON.parse(errorMessage.replace('API error:', ''));
                     if (apiError.errors && apiError.errors.length > 0) {
@@ -525,21 +546,22 @@
                         friendlyMessage = `Oops! Something went wrong: ${apiError.message}`;
                     }
                 } catch (e) {
-                    // If parsing fails, use a generic message
                     friendlyMessage = "Oops! Something went wrong when sending the event. Please check your inputs and try again.";
                 }
             }
 
-            const resultElement = document.getElementById('result');
-            resultElement.innerHTML = `
+            const errorContainer = document.getElementById('error-container');
+            errorContainer.innerHTML = `
                 <div class="error-message">
                     <h3>Error Sending Events</h3>
                     <p>${friendlyMessage}</p>
                 </div>
             `;
+            document.getElementById('result').innerHTML = ''; // Clear the result box
         }
 
         function displaySuccessResults(results, eventAction) {
+            document.getElementById('error-container').innerHTML = ''; // Clear any previous errors
             let resultHtml = `<h3>Events Sent Successfully</h3>
                               <p><strong>Event Action:</strong> ${eventAction}</p>`;
             results.forEach((result, index) => {
@@ -558,28 +580,16 @@
         function showPayload() {
             const payloads = generatePayloads();
             const formattedPayload = JSON.stringify(payloads, null, 2);
-            const resultElement = document.getElementById('result');
+            const payloadPreviewElement = document.getElementById('payload-preview');
 
-            if (!resultElement.querySelector('.payload-preview')) {
-                resultElement.innerHTML = `
-                    <h3>Payload Preview</h3>
-                    <div class="payload-actions">
-                        <div class="button-group">
-                            <button id="downloadShellScriptBtn" onclick="downloadShellScript()">Download Shell Script</button>
-                            <span class="download-info">Download a shell script to send these events via command line</span>
-                        </div>
-                    </div>
-                    <pre class="payload-preview"></pre>
-                `;
-            }
-
-            resultElement.querySelector('.payload-preview').textContent = formattedPayload;
+            payloadPreviewElement.style.display = 'block';
+            payloadPreviewElement.querySelector('.payload-preview').textContent = formattedPayload;
             document.getElementById('showPayloadBtn').style.display = 'none';
             document.getElementById('hidePayloadBtn').style.display = 'inline-block';
         }
 
         function hidePayload() {
-            document.getElementById('result').innerHTML = '';
+            document.getElementById('payload-preview').style.display = 'none';
             document.getElementById('showPayloadBtn').style.display = 'inline-block';
             document.getElementById('hidePayloadBtn').style.display = 'none';
         }
@@ -648,8 +658,8 @@
         }
 
         function updatePayload() {
-            const hidePayloadBtn = document.getElementById('hidePayloadBtn');
-            if (hidePayloadBtn && hidePayloadBtn.style.display === 'inline-block') {
+            const payloadPreviewElement = document.getElementById('payload-preview');
+            if (payloadPreviewElement.style.display === 'block') {
                 showPayload();
             }
         }
