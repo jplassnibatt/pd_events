@@ -138,6 +138,26 @@
         .error-list li {
             margin-bottom: 5px;
         }
+        #event-action-field {
+            display: flex;
+            align-items: center;
+            flex-wrap: nowrap;
+        }
+
+        #event-action-field select {
+            margin-right: 10px;
+        }
+
+        .checkbox-label {
+            display: flex;
+            align-items: center;
+            white-space: nowrap;
+            font-size: 0.9em; /* Adjust if needed */
+        }
+
+        .checkbox-label input[type="checkbox"] {
+            margin-right: 5px;
+        }
     </style>
 </head>
 <body>
@@ -150,7 +170,7 @@
         <h2>Common Fields <span class="subtext">Will be applied to every event</span></h2>
         <div id="routing-key-field" class="field">
             <label for="routing_key">Routing Key:</label>
-            <input type="text" id="routing_key" placeholder="YOUR_ROUTING_KEY_HERE">
+            <input type="text" id="routing_key" placeholder="YOUR ROUTING KEY HERE">
         </div>
         <div id="event-action-field" class="field">
             <label for="event_action">Event Action:</label>
@@ -159,11 +179,16 @@
                 <option value="acknowledge">Acknowledge</option>
                 <option value="resolve">Resolve</option>
             </select>
+            <label for="dedup_key_for_trigger" class="checkbox-label" id="dedup-key-checkbox-label">
+                <input type="checkbox" id="dedup_key_for_trigger" onchange="toggleDedupKeyField()">
+                <span>OPTIONAL: Wanna use your own dedup key?</span>
+            </label>
         </div>
         <div id="dedup-key-field" class="field" style="display: none;">
             <label for="dedup_key">Dedup Key:</label>
-            <input type="text" id="dedup_key" placeholder="Enter dedup key">
+            <input type="text" id="dedup_key" placeholder="Enter your dedup key" oninput="toggleDedupKeyField()">
         </div>
+        <div id="dedup-key-error" class="error-message" style="display: none;"></div>
         <input type="hidden" id="client" value="FireDuty 2.0">
     </div>
 
@@ -425,8 +450,23 @@
 
         function toggleDedupKeyField() {
             const eventAction = document.getElementById('event_action').value;
-            document.getElementById('dedup-key-field').style.display =
-                (eventAction === 'acknowledge' || eventAction === 'resolve') ? 'flex' : 'none';
+            const dedupKeyForTrigger = document.getElementById('dedup_key_for_trigger');
+            const dedupKeyField = document.getElementById('dedup-key-field');
+            const dedupKeyCheckboxLabel = document.getElementById('dedup-key-checkbox-label');
+
+            if (eventAction === 'acknowledge' || eventAction === 'resolve') {
+                dedupKeyField.style.display = 'flex';
+                dedupKeyCheckboxLabel.style.display = 'none';
+            } else if (eventAction === 'trigger') {
+                dedupKeyCheckboxLabel.style.display = 'inline-flex';
+                dedupKeyField.style.display = dedupKeyForTrigger.checked ? 'flex' : 'none';
+            } else {
+                dedupKeyField.style.display = 'none';
+                dedupKeyCheckboxLabel.style.display = 'none';
+            }
+
+            // Always update the payload, regardless of the event action
+            updatePayload();
         }
 
         function sendEvents() {
@@ -436,6 +476,7 @@
             const eventAction = document.getElementById('event_action').value;
             const client = document.getElementById('client').value;
             const dedupKey = document.getElementById('dedup_key').value.trim();
+            const dedupKeyForTrigger = document.getElementById('dedup_key_for_trigger').checked;
             const scenarios = document.querySelectorAll('.scenario');
 
             let errors = [];
@@ -446,6 +487,11 @@
 
             if ((eventAction === 'acknowledge' || eventAction === 'resolve') && !dedupKey) {
                 errors.push('Dedup Key is mandatory for acknowledge and resolve actions.');
+            }
+
+            // Move this check here, so it's only performed when sending events
+            if (eventAction === 'trigger' && dedupKeyForTrigger && !dedupKey) {
+                errors.push('Please add a dedup key or unmark the checkbox.');
             }
 
             if (scenarios.length === 0) {
@@ -463,16 +509,7 @@
             const events = Array.from(scenarios).map(scenario => {
                 try {
                     const scenarioData = getScenarioData(scenario.id);
-                    const payload = {
-                        routing_key: routingKey,
-                        event_action: eventAction,
-                        client: client,
-                        client_url: "https://jplassnibatt.github.io/pd_events/scenarios.html",
-                        payload: scenarioData
-                    };
-                    if (eventAction === 'acknowledge' || eventAction === 'resolve') {
-                        payload.dedup_key = dedupKey;
-                    }
+                    const payload = generateEventPayload(scenarioData);
                     return fetch('https://events.pagerduty.com/v2/enqueue', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
@@ -587,23 +624,9 @@
         }
 
         function generatePayloads() {
-            const routingKey = document.getElementById('routing_key').value;
-            const eventAction = document.getElementById('event_action').value;
-            const client = document.getElementById('client').value;
-            const dedupKey = document.getElementById('dedup_key').value;
             return Array.from(document.querySelectorAll('.scenario')).map(scenario => {
                 const scenarioData = getScenarioData(scenario.id);
-                const payload = {
-                    routing_key: routingKey,
-                    event_action: eventAction,
-                    client: client,
-                    client_url: "https://jplassnibatt.github.io/pd_events/",
-                    payload: scenarioData
-                };
-                if (eventAction === 'acknowledge' || eventAction === 'resolve') {
-                    payload.dedup_key = dedupKey;
-                }
-                return payload;
+                return generateEventPayload(scenarioData);
             });
         }
 
@@ -626,7 +649,7 @@
             const hours = String(now.getHours()).padStart(2, '0');
             const minutes = String(now.getMinutes()).padStart(2, '0');
             const seconds = String(now.getSeconds()).padStart(2, '0');
-            const filename = `send_pagerduty_events-${year}${month}${day}-${hours}${minutes}${seconds}.sh`;
+            const filename = `send_pd_events-${year}${month}${day}-${hours}${minutes}${seconds}.sh`;
 
             const a = document.createElement('a');
             a.href = url;
@@ -653,6 +676,28 @@
             if (payloadPreviewElement.style.display === 'block') {
                 showPayload();
             }
+        }
+
+        function generateEventPayload(scenarioData) {
+            const routingKey = document.getElementById('routing_key').value.trim();
+            const eventAction = document.getElementById('event_action').value;
+            const client = document.getElementById('client').value;
+            const dedupKey = document.getElementById('dedup_key').value.trim();
+            const dedupKeyForTrigger = document.getElementById('dedup_key_for_trigger').checked;
+
+            const payload = {
+                routing_key: routingKey,
+                event_action: eventAction,
+                client: client,
+                client_url: "https://jplassnibatt.github.io/pd_events/scenarios.html",
+                payload: scenarioData
+            };
+
+            if (eventAction === 'acknowledge' || eventAction === 'resolve' || (eventAction === 'trigger' && dedupKeyForTrigger)) {
+                payload.dedup_key = dedupKey;
+            }
+
+            return payload;
         }
 
         addScenario();
