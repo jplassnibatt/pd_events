@@ -6,176 +6,392 @@
     <title>KrakenDuty - Multiple Scenarios at once - Script Generator</title>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🦑 </text></svg>">
     <style>
-        :root {
-          --primary-color: #457b9d;
-          --secondary-color: #1d3557;
-          --background-color: #f1faee;
-          --text-color: #333;
-          --border-radius: 5px;
+    :root {
+        --primary-color: #666666;
+        --secondary-color: #444444;
+        --background-color: #f5f5f5;
+        --text-color: #333333;
+        --border-radius: 5px;
+        --header-bg: #e0e0e0;
+        --button-hover: #555555;
+        --error-bg: #ffebee;
+        --error-color: #c62828;
+        --success-bg: #e0e0e0;
+        --remove-button: #999999;
+        --remove-button-hover: #777777;
+        --custom-button: #888888;
+        --custom-button-hover: #666666;
+    }
+    body {
+        font-family: Arial, sans-serif;
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 20px;
+        color: var(--text-color);
+        background-color: #ffffff;
+    }
+    h1,h2,h3 {color:#444444;}
+    .section {
+        background-color: var(--background-color);
+        padding: 10px;
+        padding-top: 1px;
+        margin-bottom: 20px;
+        border-radius: var(--border-radius);
+        border: 1px solid #dddddd;
+    }
+    .field {display:flex;align-items:center;margin-bottom:10px;}
+    label {flex:0 0 120px;margin-right:10px;}
+    input {
+        flex:1;
+        padding:5px;
+        margin-right:10px;
+        width:100%;
+        box-sizing:border-box;
+        border: 1px solid #dddddd;
+        border-radius: 3px;
+    }
+    select {
+        padding: 5px;
+        margin-right: 10px;
+        box-sizing: border-box;
+        width: auto;
+        min-width: 100px;
+        border: 1px solid #dddddd;
+        border-radius: 3px;
+    }
+    button {
+        background-color: var(--primary-color);
+        color: white;
+        padding: 10px 20px;
+        border: none;
+        border-radius: var(--border-radius);
+        cursor: pointer;
+    }
+    button:hover {
+        background-color: var(--secondary-color);
+    }
+    #result {
+        margin-top:20px;
+        padding:10px;
+        background-color: var(--success-bg);
+        border-radius:5px;
+    }
+    .scenario {
+        border:1px solid #dddddd;
+        padding:10px;
+        margin-bottom:20px;
+        border-radius:5px;
+        background-color: #ffffff;
+    }
+    .scenario-header {display:flex;align-items:center;margin-bottom:10px;}
+    .scenario-title {font-weight:bold;margin-right:10px;white-space:nowrap;}
+    .scenario-type-container {flex-grow:1;display:flex;align-items:center;}
+    .scenario-type {
+        width: auto;
+        min-width: 150px;
+        max-width: 250px;
+    }
+    #scenarios-container select[id$="-severity"] {
+        width: auto;
+        min-width: 100px;
+    }
+    .scenario select {
+        width: auto;
+        min-width: 100px;
+    }
+    .remove-scenario,.remove-field {
+        background-color: var(--remove-button);
+        color:white;
+        padding:5px 10px;
+        border:none;
+        border-radius:3px;
+        cursor:pointer;
+        white-space:nowrap;
+        margin-left:10px;
+    }
+    .remove-scenario:hover,.remove-field:hover {
+        background-color: var(--remove-button-hover);
+    }
+    .save-all-scenarios {
+        background-color: #808080;
+        color: white;
+        padding: 10px 20px;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        margin-right: 10px;
+        font-weight: bold;
+    }
+    .save-all-scenarios:hover {
+        background-color: #666666;
+    }
+    .scenario-actions {
+        display: flex;
+        gap: 10px;
+        margin-top: 10px;
+    }
+    .scenario-actions button {
+        flex: 1;
+    }
+    .scenario-details {
+        margin-top:10px;
+        padding-top:10px;
+        border-top:1px solid #dddddd;
+    }
+    .custom-details {
+        margin-top:20px;
+        padding:10px;
+        background-color:#f8f8f8;
+        border-radius:5px;
+        border: 1px solid #dddddd;
+    }
+    .custom-field {display:flex;align-items:center;margin-bottom:10px;}
+    .custom-field label {flex:0 0 155px;margin-right:10px;}
+    .custom-field input[type="text"] {flex:1;width:100%;box-sizing:border-box;}
+    .toggle-custom-details {
+        display: block;
+        width: auto;
+        margin-top: 10px;
+        margin-bottom: 10px;
+        padding: 8px 12px;
+        background-color: var(--custom-button);
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        text-align: center;
+    }
+    .toggle-custom-details:hover {
+        background-color: var(--custom-button-hover);
+    }
+    .add-customfield {
+        display: block;
+        width: auto;
+        margin-top: 10px;
+        margin-bottom: 10px;
+        padding: 5px 10px;
+        background-color: var(--custom-button);
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        text-align: center;
+    }
+    .add-customfield:hover {
+        background-color: var(--custom-button-hover);
+    }
+    h2 .subtext {font-size:0.6em;font-weight:normal;color:#666666;}
+    pre {
+        background-color:#f8f8f8;
+        border:1px solid #dddddd;
+        border-radius:4px;
+        padding:10px;
+        white-space:pre-wrap;
+        word-wrap:break-word;
+        font-family:monospace;
+        font-size:14px;
+        max-height:400px;
+        overflow-y:auto;
+    }
+    #downloadShellScriptBtn {
+        background-color: #777777;
+        color: white;
+        padding: 10px 15px;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        margin-right: 15px;
+        white-space: nowrap;
+    }
+    @media (max-width: 600px) {
+        .button-group {
+            flex-direction: column;
+            align-items: flex-start;
         }
-        body {
-          font-family: Arial, sans-serif;
-          max-width: 800px;
-          margin: 0 auto;
-          padding: 20px;
-          color: var(--text-color);
-        }
-        h1,h2,h3 {color:#1d3557;}
-        .section {
-          background-color: var(--background-color);
-          padding: 10px;
-          padding-top: 1px;
-          margin-bottom: 20px;
-          border-radius: var(--border-radius);
-        }
-        .field {display:flex;align-items:center;margin-bottom:10px;}
-        label {flex:0 0 120px;margin-right:10px;}
-        input {flex:1;padding:5px;margin-right:10px;width:100%;box-sizing:border-box;}
-        select {
-            padding: 5px;
-            margin-right: 10px;
-            box-sizing: border-box;
-            width: auto;
-            min-width: 100px;
-        }
-        button {
-          background-color: var(--primary-color);
-          color: white;
-          padding: 10px 20px;
-          border: none;
-          border-radius: var(--border-radius);
-          cursor: pointer;
-        }
-        button:hover {
-          background-color: var(--secondary-color);
-        }
-        #result {margin-top:20px;padding:10px;background-color:#a8dadc;border-radius:5px;}
-        .scenario {border:1px solid #ced4da;padding:10px;margin-bottom:20px;border-radius:5px;}
-        .scenario-header {display:flex;align-items:center;margin-bottom:10px;}
-        .scenario-title {font-weight:bold;margin-right:10px;white-space:nowrap;}
-        .scenario-type-container {flex-grow:1;display:flex;align-items:center;}
-        .scenario-type {
-            width: auto;
-            min-width: 150px;
-            max-width: 250px;
-        }
-        #scenarios-container select[id$="-severity"] {
-            width: auto;
-            min-width: 100px;
-        }
-        .scenario select {
-            width: auto;
-            min-width: 100px;
-        }
-        .remove-scenario,.remove-field {background-color:#e63946;color:white;padding:5px 10px;border:none;border-radius:3px;cursor:pointer;white-space:nowrap;margin-left:10px;}
-        .remove-scenario:hover,.remove-field:hover {background-color: #C0232F;}
-        .scenario-details {margin-top:10px;padding-top:10px;border-top:1px solid #ccc;}
-        .custom-details {margin-top:20px;padding:10px;background-color:#f8f9fa;border-radius:5px;}
-        .custom-field {display:flex;align-items:center;margin-bottom:10px;}
-        .custom-field label {flex:0 0 155px;margin-right:10px;}
-        .custom-field input[type="text"] {flex:1;width:100%;box-sizing:border-box;}
-        .toggle-custom-details {
-          display: block;
-          width: auto;
-          margin-top: 10px;
-          margin-bottom: 10px;
-          padding: 8px 12px;
-          background-color: #929293;
-          color: white;
-          border: none;
-          border-radius: 4px;
-          cursor: pointer;
-          text-align: center;}
-        .toggle-custom-details:hover {background-color: #666666;}
-        .add-customfield {
-            display: block;
-            width: auto;
-            margin-top: 10px;
+        #downloadShellScriptBtn {
             margin-bottom: 10px;
-            padding: 5px 10px;
-            background-color: #787878;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            text-align: center;
         }
-        .add-customfield:hover {background-color: #676769;}
-        .scenario-actions {margin-top: 15px;}
-        h2 .subtext {font-size:0.6em;font-weight:normal;color:#666;}
-        pre {background-color:#f8f9fa;border:1px solid #e9ecef;border-radius:4px;padding:10px;white-space:pre-wrap;word-wrap:break-word;font-family:monospace;font-size:14px;max-height:400px;overflow-y:auto;}
-        #downloadShellScriptBtn {background-color: #17a2b8;color: white;padding: 10px 15px;border: none;border-radius: 5px;cursor: pointer;margin-right: 15px;white-space: nowrap;}
-        @media (max-width: 600px) {.button-group {flex-direction: column;align-items: flex-start;} #downloadShellScriptBtn {margin-bottom: 10px;}}
-        #downloadShellScriptBtn:hover {background-color:#138496;}
-        #hidePayloadBtn,#showPayloadBtn {background-color:#6c757d;color:white;padding:5px 10px;border:none;border-radius:3px;cursor:pointer;margin-bottom:10px;}
-        #hidePayloadBtn:hover,#showPayloadBtn:hover {background-color:#5a6268;}
-        .download-info {font-size: 0.9em;color: #6c757d;margin-left:-10px;}
-        .payload-actions {margin-bottom: 15px;}
-        .button-group {display: flex;align-items: center;flex-wrap: wrap;}
-        .bold-select {font-weight:bold;-webkit-appearance:none;-moz-appearance:none;appearance:none;background-image:url("data:image/svg+xml;utf8,<svg fill='black' height='24' viewBox='0 0 24 24' width='24' xmlns='http://www.w3.org/2000/svg'><path d='M7 10l5 5 5-5z'/><path d='M0 0h24v24H0z' fill='none'/></svg>");background-repeat:no-repeat;background-position-x:100%;background-position-y:5px;padding-right:25px;}
-        .colored-header {background-color:#a8dadc;padding:10px;border-radius:5px 5px 0 0;display:flex;align-items:center;justify-content:space-between;}
-        #sendEventsBtn {background-color:#F36A00;padding:12px 24px;font-size:18px;font-weight:bold;}
-        #sendEventsBtn:hover {background-color:#CE5C03;}
-        .title-group {text-align:center;margin-bottom:20px;}
-        /* .title-group h1 {margin-bottom:0.2em;font-size:2em;display:flex;align-items:baseline;justify-content:center;} */
-        .version {font-size:0.4em;font-weight:normal;color:#666;margin-left:10px;}
-        .bug-report {margin-top:20px;padding:10px;text-align:center;font-size:0.9em;border-top:1px solid #a8dadc;}
-        .bug-report a {color:#457b9d;text-decoration:none;}
-        .bug-report a:hover {text-decoration:underline;}
-        .error-message {
-            background-color: #ffebee;
-            color: #c62828;
-            padding: 10px;
-            border-radius: 5px;
-            margin-bottom: -10px;
-            margin-top: 10px;
-            border: 1px solid #ef9a9a;
-        }
-        .error-list {
-            list-style-type: none;
-            padding-left: 0;
-        }
-        .error-list li {
-            margin-bottom: 5px;
-        }
-        #event-action-field {
-            display: flex;
-            align-items: center;
-            flex-wrap: nowrap;
-        }
+    }
+    #downloadShellScriptBtn:hover {background-color:#555555;}
+    #hidePayloadBtn,#showPayloadBtn {
+        background-color:#888888;
+        color:white;
+        padding:5px 10px;
+        border:none;
+        border-radius:3px;
+        cursor:pointer;
+        margin-bottom:10px;
+    }
+    #hidePayloadBtn:hover,#showPayloadBtn:hover {background-color:#666666;}
+    .download-info {font-size: 0.9em;color: #666666;margin-left:-10px;}
+    .payload-actions {margin-bottom: 15px;}
+    .button-group {display: flex;align-items: center;flex-wrap: wrap;}
+    .bold-select {
+        font-weight:bold;
+        -webkit-appearance:none;
+        -moz-appearance:none;
+        appearance:none;
+        background-image:url("data:image/svg+xml;utf8,<svg fill='black' height='24' viewBox='0 0 24 24' width='24' xmlns='http://www.w3.org/2000/svg'><path d='M7 10l5 5 5-5z'/><path d='M0 0h24v24H0z' fill='none'/></svg>");
+        background-repeat:no-repeat;
+        background-position-x:100%;
+        background-position-y:5px;
+        padding-right:25px;
+    }
+    .colored-header {
+        background-color: var(--header-bg);
+        padding:10px;
+        border-radius:5px 5px 0 0;
+        display:flex;
+        align-items:center;
+        justify-content:space-between;
+        border-bottom: 1px solid #dddddd;
+    }
+    #sendEventsBtn {
+        background-color:#424242;
+        padding:12px 24px;
+        font-size:18px;
+        font-weight:bold;
+    }
+    #sendEventsBtn:hover {background-color:#161515;}
+    .title-group {text-align:center;margin-bottom:20px;}
+    .version {font-size:0.4em;font-weight:normal;color:#666666;margin-left:10px;}
+    .bug-report {
+        margin-top:20px;
+        padding:10px;
+        text-align:center;
+        font-size:0.9em;
+        border-top:1px solid #dddddd;
+    }
+    .bug-report a {color:#666666;text-decoration:none;}
+    .bug-report a:hover {text-decoration:underline;}
+    .error-message {
+        background-color: #f0f0f0;
+        color: #444444;
+        padding: 10px;
+        border-radius: 5px;
+        margin-bottom: -10px;
+        margin-top: 10px;
+        border: 1px solid #dddddd;
+    }
+    .error-list {list-style-type: none;padding-left: 0;}
+    .error-list li {margin-bottom: 5px;}
+    #event-action-field {display: flex;align-items: center;flex-wrap: nowrap;}
+    #event-action-field select {margin-right: 10px;}
+    .checkbox-label {
+        display: flex;
+        align-items: center;
+        white-space: nowrap;
+        font-size: 0.9em;
+    }
+    .checkbox-label input[type="checkbox"] {margin-right: 5px;}
+    .main-title {
+        font-size: 2.5em;
+        margin-bottom: 0.5em;
+        color: #444444;
+    }
+    .sub-title {font-size: 1.8em;}
+    /*messages */
+    .toast-container {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    z-index: 1000;
+    }
 
-        #event-action-field select {
-            margin-right: 10px;
-        }
+    .toast-container {
+        position: fixed;
+        bottom: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 1000;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
 
-        .checkbox-label {
-            display: flex;
-            align-items: center;
-            white-space: nowrap;
-            font-size: 0.9em; /* Adjust if needed */
-        }
+    .toast {
+        background-color: #333333;
+        color: white;
+        padding: 15px 25px;
+        border-radius: 5px;
+        margin-top: 10px;
+        opacity: 0;
+        transform: translateY(100%);
+        animation: slideUp 0.3s ease forwards;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        min-width: 200px;
+        max-width: 400px;
+        box-shadow: 0 3px 6px rgba(0,0,0,0.16);
+    }
 
-        .checkbox-label input[type="checkbox"] {
-            margin-right: 5px;
+    .toast.success {
+        background-color: #4CAF50;
+    }
+
+    .toast.error {
+        background-color: #f44336;
+    }
+
+    .toast.info {
+        background-color: #2196F3;
+    }
+
+    .toast.warning {
+        background-color: #ff9800;
+    }
+
+    .toast .close-toast {
+        background: transparent;
+        border: none;
+        color: white;
+        padding: 0 5px;
+        cursor: pointer;
+        font-size: 20px;
+        margin-left: 10px;
+    }
+
+    .toast .close-toast:hover {
+        opacity: 0.8;
+    }
+
+    @keyframes slideUp {
+        from {
+            opacity: 0;
+            transform: translateY(100%);
         }
-        .main-title {
-            font-size: 2.5em;  /* Adjust this value to make it bigger */
-            margin-bottom: 0.5em;
-            color: #600000;
+        to {
+            opacity: 1;
+            transform: translateY(0);
         }
-        .sub-title {
-            font-size: 1.8em;  /* Adjust this value as needed */
+    }
+
+    @keyframes slideOut {
+        from {
+            opacity: 1;
+            transform: translateY(0);
         }
-    </style>
+        to {
+            opacity: 0;
+            transform: translateY(100%);
+        }
+    }
+
+    .toast.hiding {
+      animation: slideOut 0.3s ease forwards;
+    }
+
+</style>
 </head>
 <body>
-      <header class="title-group">
-          <h1 class="main-title">KrakenDuty</h1>
-          <h1 class="sub-title">PagerDuty Event V2 Sender <span class="version">v1.0 (unofficial)</span></h1>
-          <h2>Multiple Scenarios at once - Script Generator</h2>
-      </header>
+    <header class="title-group">
+        <h1 class="main-title">KrakenDuty</h1>
+        <h1 class="sub-title">PagerDuty Event V2 Sender <span class="version">v1.1 (unofficial)</span></h1>
+        <h2>Multiple Scenarios at once - Script Generator</h2>
+    </header>
 
-      <div class="section">
+    <div class="section">
         <h2>Common Fields <span class="subtext">Will be applied to every event</span></h2>
         <div id="routing-key-field" class="field">
             <label for="routing_key">Routing Key:</label>
@@ -204,7 +420,13 @@
     <div class="section">
         <h2>Scenarios <span class="subtext">Go nuts!</span></h2>
         <div id="scenarios-container"></div>
-        <button onclick="addScenario()">Add Scenario</button>
+        <div class="scenario-actions">
+            <button onclick="addScenario()">Add Scenario</button>
+            <button class="save-all-scenarios" onclick="clearAllScenariosUI()">Clear All Scenarios</button>
+            <button class="save-all-scenarios" onclick="saveAllScenarios()">Save All Scenarios</button>
+            <button onclick="loadSavedScenariosUI()">Load <b>Saved</b> Scenarios</button>
+            <button onclick="clearSavedScenariosUI()">Remove <b>Saved</b> Scenarios</button>
+        </div>
     </div>
 
     <button id="sendEventsBtn" onclick="sendEvents()">Release the Kraken! 🦑 </button>
@@ -212,7 +434,6 @@
     <button id="hidePayloadBtn" onclick="hidePayload()" style="display: none;">Hide Payload</button>
 
     <div id="error-container"></div>
-
     <div id="result"></div>
 
     <div id="payload-preview" style="display: none;">
@@ -227,7 +448,7 @@
     </div>
 
     <div class="bug-report">
-        <p>Found a bug? <a href="https://github.com/jplassnibatt/pd_events/issues" target="_blank" rel="noopener noreferrer">Open an issue on GitHub</a></p>
+        <p>Found a bug? / Have an idea? <a href="https://github.com/jplassnibatt/pd_events/issues" target="_blank" rel="noopener noreferrer">Open an issue on GitHub</a></p>
     </div>
 
     <script>
@@ -239,6 +460,108 @@
             login: {summary:"Multiple failed login attempts detected",severity:"error",source:"auth-server-01.us-west-1.com",component:"Authentication Service",group:"Login",class:"Security Threat",customDetails:{failed_attempts:"100+",affected_accounts:"25",source_ip:"192.168.1.100"}},
             network: {summary:"Network connectivity issues affecting multiple services",severity:"critical",source:"core-switch-01.us-west-2.com",component:"Core Network Infrastructure",group:"Network",class:"Connectivity",customDetails:{packet_loss:"25%",affected_vlans:"VLAN 10, VLAN 20",bandwidth_utilization:"90%"}}
         };
+        // Local Storage Functions
+        function clearAllScenariosUI() {
+          const scenarios = document.querySelectorAll('.scenario');
+
+          if (scenarios.length === 0) {
+              showToast('No scenarios to clear!', 'warning');
+              return;
+          }
+
+          const scenarioCount = scenarios.length;
+          const scenarioText = scenarioCount === 1 ? 'scenario' : 'scenarios';
+
+          document.getElementById('scenarios-container').innerHTML = '';
+          showToast(`Cleared ${scenarioCount} ${scenarioText} from view!<br>Keeping the default one though.`, 'success');
+
+          // Add one empty scenario after clearing all
+          addScenario();
+          }
+
+          function saveAllScenarios() {
+              const scenarios = document.querySelectorAll('.scenario');
+
+              if (scenarios.length === 0) {
+                  showToast('No scenarios to save!', 'warning');
+                  return;
+              }
+
+              const routingKey = document.getElementById('routing_key').value.trim();
+              if (!routingKey) {
+                  showToast('Please enter a routing key before saving!', 'warning');
+                  return;
+              }
+
+              try {
+                  // Create a simple array of scenario data
+                  const scenariosToSave = Array.from(scenarios).map(scenario => {
+                      const scenarioId = scenario.id;
+                      const componentField = document.getElementById(`${scenarioId}-component-field`);
+                      const groupField = document.getElementById(`${scenarioId}-group-field`);
+                      const classField = document.getElementById(`${scenarioId}-class-field`);
+
+                      return {
+                          type: document.getElementById(`${scenarioId}-type`).value,
+                          summary: document.getElementById(`${scenarioId}-summary`).value,
+                          severity: document.getElementById(`${scenarioId}-severity`).value,
+                          source: document.getElementById(`${scenarioId}-source`).value,
+                          // Check if fields exist and are visible
+                          component: componentField && componentField.style.display !== 'none' ?
+                              document.getElementById(`${scenarioId}-component`).value : '',
+                          group: groupField && groupField.style.display !== 'none' ?
+                              document.getElementById(`${scenarioId}-group`).value : '',
+                          class: classField && classField.style.display !== 'none' ?
+                              document.getElementById(`${scenarioId}-class`).value : '',
+                          // Track which fields were removed
+                          removedFields: {
+                              component: !componentField || componentField.style.display === 'none',
+                              group: !groupField || groupField.style.display === 'none',
+                              class: !classField || classField.style.display === 'none'
+                          },
+                          customDetails: getCustomDetails(scenarioId)
+                      };
+                  });
+
+                  // Save to localStorage
+                  localStorage.setItem('pdScenarios', JSON.stringify({
+                      routingKey: routingKey,
+                      scenarios: scenariosToSave
+                  }));
+
+                  showToast(`Saved ${scenarios.length} scenario(s)!`, 'success');
+              } catch (error) {
+                  console.error('Error saving scenarios:', error);
+                  showToast('Error saving scenarios!', 'error');
+              }
+          }
+
+          function getCustomDetails(scenarioId) {
+              const customDetailsContainer = document.getElementById(`${scenarioId}-custom-details`);
+              if (customDetailsContainer.style.display === 'none') {
+                  return {};
+              }
+
+              const details = {};
+              customDetailsContainer.querySelectorAll('.custom-field').forEach(field => {
+                  const label = field.querySelector('label').textContent.replace(':', '').trim();
+                  const value = field.querySelector('input:last-of-type').value;
+                  if (label && value) {
+                      details[label] = value;
+                  }
+              });
+              return details;
+          }
+
+        function clearSavedScenarios() {
+            const savedData = loadScenariosFromLocalStorage();
+            if (savedData.scenarios.length === 0) {
+                showToast('No saved scenarios to clear.', 'warning');
+                return false;
+            }
+            localStorage.removeItem('pdScenarios');
+            return true;
+        }
 
         function addScenario() {
             const container = document.getElementById('scenarios-container');
@@ -305,6 +628,161 @@
             updatePayload();
         }
 
+        function loadSavedScenariosUI() {
+            const savedData = localStorage.getItem('pdScenarios');
+            if (!savedData) {
+                showToast('No saved scenarios found!', 'warning');
+                return;
+            }
+
+            try {
+                const { routingKey, scenarios } = JSON.parse(savedData);
+                document.getElementById('routing_key').value = routingKey;
+                document.getElementById('scenarios-container').innerHTML = '';
+
+                scenarios.forEach((scenario, index) => {
+                    const container = document.getElementById('scenarios-container');
+                    const scenarioId = `scenario-${Date.now()}-${index}`;
+
+                    const scenarioHtml = `
+                        <div id="${scenarioId}" class="scenario">
+                            <div class="scenario-header colored-header">
+                                <span class="scenario-title">Scenario <span class="scenario-number">${index + 1}</span>:</span>
+                                <div class="scenario-type-container">
+                                    <select id="${scenarioId}-type" class="scenario-type bold-select">
+                                        <option value="application">Application Issues</option>
+                                        <option value="cpu">CPU Issues</option>
+                                        <option value="database">Database Issues</option>
+                                        <option value="disk">Disk Issues</option>
+                                        <option value="login">Login Issues</option>
+                                        <option value="network">Network Issues</option>
+                                    </select>
+                                    <button class="remove-scenario" onclick="removeScenario('${scenarioId}')">Remove</button>
+                                </div>
+                            </div>
+                            <div class="scenario-details">
+                                <div class="field">
+                                    <label for="${scenarioId}-summary">Summary:</label>
+                                    <input type="text" id="${scenarioId}-summary">
+                                </div>
+                                <div class="field">
+                                    <label for="${scenarioId}-severity">Severity:</label>
+                                    <select id="${scenarioId}-severity">
+                                        <option value="critical">Critical</option>
+                                        <option value="error">Error</option>
+                                        <option value="warning">Warning</option>
+                                        <option value="info">Info</option>
+                                    </select>
+                                </div>
+                                <div class="field">
+                                    <label for="${scenarioId}-source">Source:</label>
+                                    <input type="text" id="${scenarioId}-source">
+                                </div>
+                                <div id="${scenarioId}-component-field" class="field" ${scenario.removedFields?.component ? 'style="display: none;"' : ''}>
+                                    <label for="${scenarioId}-component">Component:</label>
+                                    <input type="text" id="${scenarioId}-component">
+                                    <button class="remove-field" onclick="removeField('${scenarioId}-component-field')">x</button>
+                                </div>
+                                <div id="${scenarioId}-group-field" class="field" ${scenario.removedFields?.group ? 'style="display: none;"' : ''}>
+                                    <label for="${scenarioId}-group">Group:</label>
+                                    <input type="text" id="${scenarioId}-group">
+                                    <button class="remove-field" onclick="removeField('${scenarioId}-group-field')">x</button>
+                                </div>
+                                <div id="${scenarioId}-class-field" class="field" ${scenario.removedFields?.class ? 'style="display: none;"' : ''}>
+                                    <label for="${scenarioId}-class">Class:</label>
+                                    <input type="text" id="${scenarioId}-class">
+                                    <button class="remove-field" onclick="removeField('${scenarioId}-class-field')">x</button>
+                                </div>
+                                <div id="${scenarioId}-extra-fields"></div>
+                            </div>
+                        </div>
+                    `;
+
+                    container.insertAdjacentHTML('beforeend', scenarioHtml);
+
+                    // Add the custom details button and container
+                    const scenarioDetails = document.querySelector(`#${scenarioId} .scenario-details`);
+                    scenarioDetails.insertAdjacentHTML('beforeend', `
+                        <button class="toggle-custom-details" onclick="toggleCustomFields('${scenarioId}')">Add Custom Details for Scenario ${index + 1}</button>
+                        <div id="${scenarioId}-custom-details" class="custom-details" style="display: none;">
+                            <h3>Custom Details for Scenario ${index + 1}</h3>
+                            <div id="${scenarioId}-extra-custom-details"></div>
+                            <button class="add-customfield" onclick="addCustomDetailField('${scenarioId}')">Add Custom Detail</button>
+                        </div>
+                    `);
+
+                    // Set the values from saved data
+                    const newScenario = document.getElementById(scenarioId);
+                    document.getElementById(`${scenarioId}-type`).value = scenario.type;
+                    document.getElementById(`${scenarioId}-summary`).value = scenario.summary;
+                    document.getElementById(`${scenarioId}-severity`).value = scenario.severity;
+                    document.getElementById(`${scenarioId}-source`).value = scenario.source;
+
+                    if (!scenario.removedFields?.component) {
+                        document.getElementById(`${scenarioId}-component`).value = scenario.component || '';
+                    }
+                    if (!scenario.removedFields?.group) {
+                        document.getElementById(`${scenarioId}-group`).value = scenario.group || '';
+                    }
+                    if (!scenario.removedFields?.class) {
+                        document.getElementById(`${scenarioId}-class`).value = scenario.class || '';
+                    }
+
+                    // Handle custom details if they exist
+                    if (Object.keys(scenario.customDetails || {}).length > 0) {
+                        const customDetailsContainer = document.getElementById(`${scenarioId}-custom-details`);
+                        const extraCustomDetails = document.getElementById(`${scenarioId}-extra-custom-details`);
+                        customDetailsContainer.style.display = 'block';
+
+                        Object.entries(scenario.customDetails).forEach(([key, value]) => {
+                            const fieldId = `${scenarioId}-custom-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+                            extraCustomDetails.insertAdjacentHTML('beforebegin', `
+                                <div class="custom-field" id="${fieldId}">
+                                    <label for="${fieldId}-value">${key}:</label>
+                                    <input type="text" id="${fieldId}-value" value="${value}">
+                                    <button class="remove-field" onclick="removeCustomField('${scenarioId}', '${fieldId}')">x</button>
+                                </div>
+                            `);
+                        });
+
+                        const toggleButton = customDetailsContainer.previousElementSibling;
+                        toggleButton.textContent = `Remove Custom Details from Scenario ${index + 1}`;
+                    }
+
+                    addListenersToElement(newScenario);
+                });
+
+                updatePayload();
+                showToast(`Loaded ${scenarios.length} saved scenario(s)!`, 'success');
+            } catch (error) {
+                console.error('Error loading saved scenarios:', error);
+                showToast('Error loading saved scenarios!', 'error');
+            }
+        }
+
+        function clearSavedScenariosUI() {
+            const savedData = localStorage.getItem('pdScenarios');
+
+            if (!savedData) {
+                showToast('No saved scenarios found!', 'warning');
+                return;
+            }
+
+            try {
+                const { scenarios } = JSON.parse(savedData);
+                const scenarioCount = scenarios.length;
+                const scenarioText = scenarioCount === 1 ? 'scenario' : 'scenarios';
+
+                // Remove the saved scenarios from localStorage
+                localStorage.removeItem('pdScenarios');
+
+                showToast(`Successfully removed ${scenarioCount} saved ${scenarioText}!`, 'success');
+            } catch (error) {
+                console.error('Error removing saved scenarios:', error);
+                showToast('Error removing saved scenarios!', 'error');
+            }
+        }
+
         function removeScenario(scenarioId) {
             document.getElementById(scenarioId).remove();
             updateScenarioNumbers();
@@ -330,14 +808,18 @@
             });
         }
 
-        function updateScenarioFields(scenarioId) {
+        function updateScenarioFields(scenarioId, skipTemplateUpdate = false) {
             const type = document.getElementById(`${scenarioId}-type`).value;
             const template = scenarioTemplates[type];
-            ['summary', 'severity', 'source', 'component', 'group', 'class'].forEach(field => {
-                const el = document.getElementById(`${scenarioId}-${field}`);
-                if (el) el.value = template[field];
-            });
-            updateCustomFields(scenarioId, template.customDetails);
+
+            if (!skipTemplateUpdate) {
+                ['summary', 'severity', 'source', 'component', 'group', 'class'].forEach(field => {
+                    const el = document.getElementById(`${scenarioId}-${field}`);
+                    if (el) el.value = template[field];
+                });
+                updateCustomFields(scenarioId, template.customDetails);
+            }
+
             updatePayload();
         }
 
@@ -403,12 +885,12 @@
             field.querySelector('label').textContent = labelInput.value + ':';
         }
 
-        function removeCustomField(scenarioId, fieldIdOrName) {
-            const container = document.getElementById(`${scenarioId}-custom-details`);
-            const field = container.querySelector(`#${fieldIdOrName}`) ||
-                          container.querySelector(`.custom-field:has(#${scenarioId}-${fieldIdOrName})`);
-            if (field) field.remove();
-            updatePayload();
+        function removeCustomField(scenarioId, fieldId) {
+            const field = document.getElementById(fieldId);
+            if (field) {
+                field.remove();
+                updatePayload();
+            }
         }
 
         function getScenarioData(scenarioId) {
@@ -430,14 +912,18 @@
                 source: source,
                 custom_details: {}
             };
+
             document.querySelectorAll(`#${scenarioId} .field`).forEach(field => {
                 const label = field.querySelector('label');
                 const input = field.querySelector('input:last-of-type, select');
                 if (label && input) {
                     const key = label.textContent.replace(':', '').trim().toLowerCase();
-                    data[key] = input.value;
+                    if (!['summary', 'severity', 'source'].includes(key)) {
+                        data[key] = input.value;
+                    }
                 }
             });
+
             const customDetailsContainer = document.getElementById(`${scenarioId}-custom-details`);
             if (customDetailsContainer.style.display !== 'none') {
                 customDetailsContainer.querySelectorAll('.custom-field').forEach(field => {
@@ -449,9 +935,9 @@
                     }
                 });
             }
+
             return data;
         }
-
         function removeField(fieldId) {
             document.getElementById(fieldId).remove();
             updatePayload();
@@ -474,7 +960,6 @@
                 dedupKeyCheckboxLabel.style.display = 'none';
             }
 
-            // Always update the payload, regardless of the event action
             updatePayload();
         }
 
@@ -491,24 +976,22 @@
             let errors = [];
 
             if (!routingKey) {
-                errors.push('Routing Key is mandatory. This is your Event Orchestration or Service Integration Key.');
+                showToast('Routing Key is mandatory.<br>This Key is your Event Orchestration or Service Integration Key.', 'error', 5000);
+                return;
             }
 
             if ((eventAction === 'acknowledge' || eventAction === 'resolve') && !dedupKey) {
-                errors.push('Dedup Key is mandatory for acknowledge and resolve actions.');
+                showToast('Dedup Key is mandatory for acknowledge and resolve actions.', 'error', 5000);
+                return;
             }
 
-            // Move this check here, so it's only performed when sending events
             if (eventAction === 'trigger' && dedupKeyForTrigger && !dedupKey) {
-                errors.push('Please add a dedup key or unmark the checkbox.');
+                showToast('Please add a Dedup Key or unmark the checkbox.', 'error', 5000);
+                return;
             }
 
             if (scenarios.length === 0) {
-                errors.push('At least one scenario is required.');
-            }
-
-            if (errors.length > 0) {
-                displayErrors(errors);
+                showToast('At least one scenario is required.', 'error', 5000);
                 return;
             }
 
@@ -545,28 +1028,11 @@
                 });
         }
 
-        function displayErrors(errors) {
-            const errorContainer = document.getElementById('error-container');
-            errorContainer.innerHTML = `
-                <div class="error-message">
-                    <h3>Error</h3>
-                    <ul class="error-list">
-                        ${errors.map(error => `<li>${error}</li>`).join('')}
-                    </ul>
-                </div>
-            `;
-            document.getElementById('result').innerHTML = '';
-        }
-
         function displayError(errorMessage) {
             let friendlyMessage = errorMessage;
 
-            if (errorMessage.includes("'payload.severity' is invalid")) {
-                friendlyMessage = "Oops! It looks like the severity level you've chosen isn't quite right. Please make sure you've selected one of these options: 'critical', 'warning', 'error', or 'info'.";
-            } else if (errorMessage.includes("'payload.severity' is missing or blank")) {
-                friendlyMessage = "Hmm, we seem to be missing the severity level. Please make sure you've selected one of these options: 'critical', 'warning', 'error', or 'info'.";
-            } else if (errorMessage.includes('Invalid routing key')) {
-                friendlyMessage = "The routing key doesn't seem to be correct. Double-check it and give it another try!";
+            if (errorMessage.includes('Invalid routing key')) {
+                showToast(`The routing key doesn't seem to be correct.<br>Double-check it and give it another try!`, 'error', 5000);
             } else if (errorMessage.includes('API error:')) {
                 try {
                     const apiError = JSON.parse(errorMessage.replace('API error:', ''));
@@ -576,7 +1042,7 @@
                         friendlyMessage = `Oops! Something went wrong: ${apiError.message}`;
                     }
                 } catch (e) {
-                    friendlyMessage = "Oops! Something went wrong when sending the event. Please check your inputs and try again.";
+                    showToast('Oops! Something went wrong when sending the event.<br>Please check your inputs and try again.', 'error', 5000);
                 }
             }
 
@@ -639,6 +1105,28 @@
             });
         }
 
+        function generateEventPayload(scenarioData) {
+            const routingKey = document.getElementById('routing_key').value.trim();
+            const eventAction = document.getElementById('event_action').value;
+            const client = document.getElementById('client').value;
+            const dedupKey = document.getElementById('dedup_key').value.trim();
+            const dedupKeyForTrigger = document.getElementById('dedup_key_for_trigger').checked;
+
+            const payload = {
+                routing_key: routingKey,
+                event_action: eventAction,
+                client: client,
+                client_url: "https://jplassnibatt.github.io/pd_events/scenarios.html",
+                payload: scenarioData
+            };
+
+            if (eventAction === 'acknowledge' || eventAction === 'resolve' || (eventAction === 'trigger' && dedupKeyForTrigger)) {
+                payload.dedup_key = dedupKey;
+            }
+
+            return payload;
+        }
+
         function downloadShellScript() {
             const payloads = generatePayloads();
             let scriptContent = '#!/bin/bash\n\n';
@@ -687,33 +1175,45 @@
             }
         }
 
-        function generateEventPayload(scenarioData) {
-            const routingKey = document.getElementById('routing_key').value.trim();
-            const eventAction = document.getElementById('event_action').value;
-            const client = document.getElementById('client').value;
-            const dedupKey = document.getElementById('dedup_key').value.trim();
-            const dedupKeyForTrigger = document.getElementById('dedup_key_for_trigger').checked;
-
-            const payload = {
-                routing_key: routingKey,
-                event_action: eventAction,
-                client: client,
-                client_url: "https://jplassnibatt.github.io/pd_events/scenarios.html",
-                payload: scenarioData
-            };
-
-            if (eventAction === 'acknowledge' || eventAction === 'resolve' || (eventAction === 'trigger' && dedupKeyForTrigger)) {
-                payload.dedup_key = dedupKey;
-            }
-
-            return payload;
-        }
-
         addScenario();
         document.addEventListener('DOMContentLoaded', () => {
             addChangeListeners();
             toggleDedupKeyField();
         });
+
+        function showToast(message, type = 'info', duration = 3000) {
+        const container = document.getElementById('toastContainer');
+        const toast = document.createElement('div');
+        const id = 'toast-' + Date.now();
+
+        toast.id = id;
+        toast.className = `toast ${type}`;
+        toast.innerHTML = `
+            ${message}
+            <button class="close-toast" onclick="closeToast('${id}')">&times;</button>
+        `;
+
+        container.appendChild(toast);
+
+        // Auto-remove after duration
+        setTimeout(() => closeToast(id), duration);
+
+        // Handle click anywhere on toast to dismiss
+        toast.addEventListener('click', () => closeToast(id));
+        }
+
+        function closeToast(id) {
+            const toast = document.getElementById(id);
+            if (toast) {
+                toast.classList.add('hiding');
+                setTimeout(() => {
+                    if (toast.parentElement) {
+                        toast.parentElement.removeChild(toast);
+                    }
+                }, 300); // Match the animation duration
+            }
+        }
     </script>
+    <div class="toast-container" id="toastContainer"></div>
 </body>
 </html>
