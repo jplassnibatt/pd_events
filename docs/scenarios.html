@@ -164,7 +164,7 @@
     .toggle-custom-details:hover {
         background-color: var(--custom-button-hover);
     }
-    .add-customfield {
+    .add-customdetail {
         display: block;
         width: auto;
         margin-top: 10px;
@@ -177,7 +177,7 @@
         cursor: pointer;
         text-align: center;
     }
-    .add-customfield:hover {
+    .add-customdetail:hover {
         background-color: var(--custom-button-hover);
     }
     h2 .subtext {font-size:0.6em;font-weight:normal;color:#666666;}
@@ -617,7 +617,7 @@
                             <button class="remove-field" onclick="removeField('${scenarioId}-class-field')">x</button>
                         </div>
                         <div id="${scenarioId}-extra-fields"></div>
-                        <button class="toggle-custom-details" onclick="toggleCustomFields('${scenarioId}')">Add Custom Details for Scenario ${scenarioCount}</button>
+                        <button class="toggle-custom-details" onclick="toggleCustomDetails('${scenarioId}')">Add Custom Details for Scenario ${scenarioCount}</button>
                         <div id="${scenarioId}-custom-details" class="custom-details" style="display: none;"></div>
                     </div>
                 </div>
@@ -703,11 +703,11 @@
                     // Add the custom details button and container
                     const scenarioDetails = document.querySelector(`#${scenarioId} .scenario-details`);
                     scenarioDetails.insertAdjacentHTML('beforeend', `
-                        <button class="toggle-custom-details" onclick="toggleCustomFields('${scenarioId}')">Add Custom Details for Scenario ${index + 1}</button>
+                        <button class="toggle-custom-details" onclick="toggleCustomDetails('${scenarioId}')">Add Custom Details for Scenario ${index + 1}</button>
                         <div id="${scenarioId}-custom-details" class="custom-details" style="display: none;">
                             <h3>Custom Details for Scenario ${index + 1}</h3>
                             <div id="${scenarioId}-extra-custom-details"></div>
-                            <button class="add-customfield" onclick="addCustomDetailField('${scenarioId}')">Add Custom Detail</button>
+                            <button class="add-customdetail" onclick="addCustomDetailField('${scenarioId}')">Add Custom Detail</button>
                         </div>
                     `);
 
@@ -740,7 +740,7 @@
                                 <div class="custom-field" id="${fieldId}">
                                     <label for="${fieldId}-value">${key}:</label>
                                     <input type="text" id="${fieldId}-value" value="${value}">
-                                    <button class="remove-field" onclick="removeCustomField('${scenarioId}', '${fieldId}')">x</button>
+                                    <button class="remove-field" onclick="removeCustomDetail('${scenarioId}', '${fieldId}')">x</button>
                                 </div>
                             `);
                         });
@@ -797,7 +797,7 @@
                 const scenarioId = scenario.id;
                 const type = document.getElementById(`${scenarioId}-type`).value;
                 const template = scenarioTemplates[type];
-                updateCustomFields(scenarioId, template.customDetails);
+                updateCustomDetails(scenarioId, template.customDetails);
 
                 const toggleButton = scenario.querySelector('.toggle-custom-details');
                 const customDetailsContainer = document.getElementById(`${scenarioId}-custom-details`);
@@ -817,34 +817,38 @@
                     const el = document.getElementById(`${scenarioId}-${field}`);
                     if (el) el.value = template[field];
                 });
-                updateCustomFields(scenarioId, template.customDetails);
+                updateCustomDetails(scenarioId, template.customDetails);
             }
 
             updatePayload();
         }
 
-        function updateCustomFields(scenarioId, customDetails) {
+        function updateCustomDetails(scenarioId, customDetails) {
             const container = document.getElementById(`${scenarioId}-custom-details`);
             const scenarioNumber = document.querySelector(`#${scenarioId} .scenario-number`).textContent;
 
             container.innerHTML = `<h3>Custom Details for Scenario ${scenarioNumber}</h3>`;
 
+            // Add template fields with the same pattern as component/group/source fields
             Object.entries(customDetails).forEach(([key, value]) => {
-                container.insertAdjacentHTML('beforeend', `
-                    <div class="custom-field">
-                        <label for="${scenarioId}-${key}">${key}:</label>
-                        <input type="text" id="${scenarioId}-${key}" value="${value}">
-                        <button class="remove-field" onclick="removeCustomField('${scenarioId}', '${key}')">x</button>
+                const fieldContainerId = `${scenarioId}-${key.toLowerCase().replace(/\s+/g, '-')}-field`;
+                const fieldHtml = `
+                    <div class="custom-field" id="${fieldContainerId}">
+                        <label>${key}:</label>
+                        <input type="text" value="${value}">
+                        <button class="remove-field" onclick="removeField('${fieldContainerId}')">x</button>
                     </div>
-                `);
+                `;
+                container.insertAdjacentHTML('beforeend', fieldHtml);
             });
+
             container.insertAdjacentHTML('beforeend', `
                 <div id="${scenarioId}-extra-custom-details"></div>
-                <button class="add-customfield" onclick="addCustomDetailField('${scenarioId}')">Add Custom Detail</button>
+                <button class="add-customdetail" onclick="addCustomDetailField('${scenarioId}')">Add Custom Detail</button>
             `);
         }
 
-        function toggleCustomFields(scenarioId) {
+        function toggleCustomDetails(scenarioId) {
             const container = document.getElementById(`${scenarioId}-custom-details`);
             const toggleButton = container.previousElementSibling;
             const isHidden = container.style.display === 'none';
@@ -864,28 +868,30 @@
 
         function addCustomDetailField(scenarioId) {
             const container = document.getElementById(`${scenarioId}-extra-custom-details`);
-            const fieldCount = container.children.length + 1;
-            const fieldId = `${scenarioId}-extra-custom-field-${fieldCount}`;
-            container.insertAdjacentHTML('beforeend', `
-                <div id="${fieldId}" class="custom-field">
-                    <label for="${fieldId}-value">
-                        <input type="text" placeholder="Field name" onchange="updateCustomFieldLabel('${fieldId}')">
+            const fieldId = `${scenarioId}-custom-${Date.now()}-field`;
+
+            const fieldHtml = `
+                <div class="custom-field" id="${fieldId}">
+                    <label>
+                        <input type="text" placeholder="Field name" onchange="updateCustomDetailLabel('${fieldId}')">
                     </label>
-                    <input type="text" id="${fieldId}-value" placeholder="Field value">
-                    <button class="remove-field" onclick="removeCustomField('${scenarioId}', '${fieldId}')">x</button>
+                    <input type="text" placeholder="Field value">
+                    <button class="remove-field" onclick="removeField('${fieldId}')">x</button>
                 </div>
-            `);
+            `;
+
+            container.insertAdjacentHTML('beforeend', fieldHtml);
             addListenersToElement(document.getElementById(fieldId));
             updatePayload();
         }
 
-        function updateCustomFieldLabel(fieldId) {
+        function updateCustomDetailLabel(fieldId) {
             const field = document.getElementById(fieldId);
             const labelInput = field.querySelector('label input');
             field.querySelector('label').textContent = labelInput.value + ':';
         }
 
-        function removeCustomField(scenarioId, fieldId) {
+        function removeCustomDetail(scenarioId, fieldId) {
             const field = document.getElementById(fieldId);
             if (field) {
                 field.remove();
