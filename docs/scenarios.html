@@ -460,6 +460,78 @@
             login: {summary:"Multiple failed login attempts detected",severity:"error",source:"auth-server-01.us-west-1.com",component:"Authentication Service",group:"Login",class:"Security Threat",customDetails:{failed_attempts:"100+",affected_accounts:"25",source_ip:"192.168.1.100"}},
             network: {summary:"Network connectivity issues affecting multiple services",severity:"critical",source:"core-switch-01.us-west-2.com",component:"Core Network Infrastructure",group:"Network",class:"Connectivity",customDetails:{packet_loss:"25%",affected_vlans:"VLAN 10, VLAN 20",bandwidth_utilization:"90%"}}
         };
+        let realRoutingKey = ''; // Store the actual routing key
+
+        function maskRoutingKey(key) {
+            if (!key) return '';
+            const maskLength = Math.min(20, key.length);
+            return '•'.repeat(maskLength) + key.slice(maskLength);
+        }
+
+        function handleRoutingKeyInput(event) {
+            const inputField = event.target;
+            const cursorPosition = inputField.selectionStart;
+            const currentValue = inputField.value;
+
+            // If the value is different from the masked version
+            if (currentValue !== maskRoutingKey(realRoutingKey)) {
+                // If it's a completely new value (like on paste or initial input)
+                if (!currentValue.includes('•')) {
+                    realRoutingKey = currentValue;
+                }
+                // If we're editing after the masked portion
+                else {
+                    const visiblePart = currentValue.slice(20);
+                    realRoutingKey = realRoutingKey.slice(0, 20) + visiblePart;
+                }
+            }
+
+            // Show masked version in UI
+            setTimeout(() => {
+                inputField.value = maskRoutingKey(realRoutingKey);
+                // Maintain cursor position
+                if (cursorPosition > 20) {
+                    inputField.selectionStart = cursorPosition;
+                    inputField.selectionEnd = cursorPosition;
+                }
+            }, 0);
+        }
+
+        function addListenersToElement(element) {
+            element.querySelectorAll('input, select').forEach(input => {
+                input.addEventListener('change', updatePayload);
+
+                if (input.id === 'routing_key') {
+                    // Remove any existing listeners
+                    input.removeEventListener('input', handleRoutingKeyInput);
+                    // Add the new input handler
+                    input.addEventListener('input', handleRoutingKeyInput);
+
+                    // Handle paste events
+                    input.addEventListener('paste', (e) => {
+                        e.preventDefault();
+                        const pastedText = (e.clipboardData || window.clipboardData).getData('text');
+                        realRoutingKey = pastedText; // Store complete key
+                        input.value = maskRoutingKey(pastedText);
+                        updatePayload();
+                    });
+
+                    // Prevent drag and drop
+                    input.addEventListener('drop', (e) => {
+                        e.preventDefault();
+                    });
+
+                    // Initial masking if there's a value
+                    if (input.value && !input.value.includes('•')) {
+                        realRoutingKey = input.value; // Store complete initial key
+                        input.value = maskRoutingKey(input.value);
+                    }
+                } else {
+                    input.addEventListener('input', updatePayload);
+                }
+            });
+        }
+
         // Local Storage Functions
         function clearAllScenariosUI() {
           const scenarios = document.querySelectorAll('.scenario');
@@ -487,8 +559,8 @@
                   return;
               }
 
-              const routingKey = document.getElementById('routing_key').value.trim();
-              if (!routingKey) {
+              // Use realRoutingKey instead of the input field value
+              if (!realRoutingKey) {
                   showToast('Please enter a routing key before saving!', 'warning');
                   return;
               }
@@ -523,9 +595,9 @@
                       };
                   });
 
-                  // Save to localStorage
+                  // Save to localStorage using the real routing key
                   localStorage.setItem('pdScenarios', JSON.stringify({
-                      routingKey: routingKey,
+                      routingKey: realRoutingKey, // Save the real routing key, not the masked one
                       scenarios: scenariosToSave
                   }));
 
@@ -637,7 +709,11 @@
 
             try {
                 const { routingKey, scenarios } = JSON.parse(savedData);
-                document.getElementById('routing_key').value = routingKey;
+
+                // Set both the real and masked routing key
+                realRoutingKey = routingKey; // Store the real key
+                document.getElementById('routing_key').value = maskRoutingKey(routingKey); // Show masked version
+
                 document.getElementById('scenarios-container').innerHTML = '';
 
                 scenarios.forEach((scenario, index) => {
@@ -972,19 +1048,18 @@
         function sendEvents() {
             hidePayload();
 
-            const routingKey = document.getElementById('routing_key').value.trim();
+            // Use realRoutingKey instead of input field value
+            if (!realRoutingKey) {
+                showToast('Routing Key is mandatory.<br>This Key is your Event Orchestration or Service Integration Key.', 'error', 5000);
+                return;
+            }
+
             const eventAction = document.getElementById('event_action').value;
-            const client = document.getElementById('client').value;
             const dedupKey = document.getElementById('dedup_key').value.trim();
             const dedupKeyForTrigger = document.getElementById('dedup_key_for_trigger').checked;
             const scenarios = document.querySelectorAll('.scenario');
 
             let errors = [];
-
-            if (!routingKey) {
-                showToast('Routing Key is mandatory.<br>This Key is your Event Orchestration or Service Integration Key.', 'error', 5000);
-                return;
-            }
 
             if ((eventAction === 'acknowledge' || eventAction === 'resolve') && !dedupKey) {
                 showToast('Dedup Key is mandatory for acknowledge and resolve actions.', 'error', 5000);
@@ -1080,14 +1155,22 @@
         }
 
         function showPayload() {
-            const routingKey = document.getElementById('routing_key').value.trim();
-            if (!routingKey) {
+            if (!realRoutingKey) {
                 displayError("Routing Key is required to show the payload.");
                 return;
             }
 
             const payloads = generatePayloads();
-            const formattedPayload = JSON.stringify(payloads, null, 2);
+
+            // Create a deep copy of payloads for display purposes
+            const displayPayloads = JSON.parse(JSON.stringify(payloads));
+
+            // Mask the routing key in the display version
+            displayPayloads.forEach(payload => {
+                payload.routing_key = maskRoutingKey(payload.routing_key);
+            });
+
+            const formattedPayload = JSON.stringify(displayPayloads, null, 2);
             const payloadPreviewElement = document.getElementById('payload-preview');
 
             payloadPreviewElement.style.display = 'block';
@@ -1107,19 +1190,22 @@
         function generatePayloads() {
             return Array.from(document.querySelectorAll('.scenario')).map(scenario => {
                 const scenarioData = getScenarioData(scenario.id);
-                return generateEventPayload(scenarioData);
+                const payload = generateEventPayload(scenarioData);
+                // Ensure we're using the real routing key
+                payload.routing_key = realRoutingKey;
+                return payload;
             });
         }
 
         function generateEventPayload(scenarioData) {
-            const routingKey = document.getElementById('routing_key').value.trim();
             const eventAction = document.getElementById('event_action').value;
             const client = document.getElementById('client').value;
             const dedupKey = document.getElementById('dedup_key').value.trim();
             const dedupKeyForTrigger = document.getElementById('dedup_key_for_trigger').checked;
 
+            // Create payload with the real routing key, not the masked one
             const payload = {
-                routing_key: routingKey,
+                routing_key: realRoutingKey, // Always use realRoutingKey, not the masked value
                 event_action: eventAction,
                 client: client,
                 client_url: "https://jplassnibatt.github.io/pd_events/scenarios.html",
@@ -1137,11 +1223,14 @@
             const payloads = generatePayloads();
             let scriptContent = '#!/bin/bash\n\n';
             payloads.forEach((payload, index) => {
+                // Ensure we're using the real routing key
+                payload.routing_key = realRoutingKey;
                 const curlCommand = `curl -X POST https://events.pagerduty.com/v2/enqueue \\
                  -H 'Content-Type: application/json' \\
                  -d '${JSON.stringify(payload)}'\n\n`;
                 scriptContent += `echo "Sending event ${index + 1}..."\n${curlCommand}echo "Event ${index + 1} sent."\n\n`;
             });
+
             const blob = new Blob([scriptContent], { type: 'text/plain' });
             const url = URL.createObjectURL(blob);
 
@@ -1167,13 +1256,6 @@
             addListenersToElement(document);
         }
 
-        function addListenersToElement(element) {
-            element.querySelectorAll('input, select').forEach(input => {
-                input.addEventListener('change', updatePayload);
-                input.addEventListener('input', updatePayload);
-            });
-        }
-
         function updatePayload() {
             const payloadPreviewElement = document.getElementById('payload-preview');
             if (payloadPreviewElement.style.display === 'block') {
@@ -1185,6 +1267,13 @@
         document.addEventListener('DOMContentLoaded', () => {
             addChangeListeners();
             toggleDedupKeyField();
+
+            // Initialize routing key masking
+            const routingKeyInput = document.getElementById('routing_key');
+            if (routingKeyInput.value && !routingKeyInput.value.includes('•')) {
+                realRoutingKey = routingKeyInput.value; // Store complete initial key
+                routingKeyInput.value = maskRoutingKey(routingKeyInput.value);
+            }
         });
 
         function showToast(message, type = 'info', duration = 3000) {
@@ -1219,6 +1308,11 @@
                 }, 300); // Match the animation duration
             }
         }
+
+        function checkRealKey() {
+            console.log('Current real routing key:', realRoutingKey);
+        }
+
     </script>
     <div class="toast-container" id="toastContainer"></div>
 </body>
