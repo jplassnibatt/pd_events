@@ -129,9 +129,11 @@
         display: flex;
         gap: 10px;
         margin-top: 10px;
+        flex-wrap: wrap;
     }
     .scenario-actions button {
         flex: 1;
+        min-width: 120px;
     }
     .scenario-details {
         margin-top:10px;
@@ -210,6 +212,12 @@
         }
         #downloadShellScriptBtn {
             margin-bottom: 10px;
+        }
+        .scenario-actions {
+            flex-direction: column;
+        }
+        .scenario-actions button {
+            min-width: auto;
         }
     }
     #downloadShellScriptBtn:hover {background-color:#555555;}
@@ -290,14 +298,132 @@
         color: #444444;
     }
     .sub-title {font-size: 1.8em;}
-    /*messages */
-    .toast-container {
-    position: fixed;
-    bottom: 20px;
-    right: 20px;
-    z-index: 1000;
+
+    /* Enhanced Routing Key Management */
+    .routing-key-container {
+        position: relative;
+    }
+    .routing-key-dropdown {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        background: white;
+        border: 1px solid #dddddd;
+        border-top: none;
+        border-radius: 0 0 3px 3px;
+        max-height: 200px;
+        overflow-y: auto;
+        z-index: 1000;
+        display: none;
+    }
+    .routing-key-item {
+        padding: 8px 12px;
+        cursor: pointer;
+        border-bottom: 1px solid #f0f0f0;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    .routing-key-item:hover {
+        background-color: #f5f5f5;
+    }
+    .routing-key-item:last-child {
+        border-bottom: none;
+    }
+    .routing-key-name {
+        font-weight: bold;
+        color: #333;
+    }
+    .routing-key-preview {
+        font-family: monospace;
+        color: #666;
+        font-size: 0.9em;
+    }
+    .routing-key-delete {
+        background: #dc3545;
+        color: white;
+        border: none;
+        border-radius: 3px;
+        padding: 2px 6px;
+        font-size: 0.8em;
+        cursor: pointer;
+        margin-left: 8px;
+    }
+    .routing-key-delete:hover {
+        background: #c82333;
+    }
+    .routing-key-actions {
+        display: flex;
+        gap: 5px;
+        margin-top: 5px;
+        flex-wrap: wrap;
     }
 
+    .routing-key-save, .routing-key-load {
+        background: #6c757d;
+        color: white;
+        border: none;
+        border-radius: 3px;
+        padding: 5px 10px;
+        font-size: 0.8em;
+        cursor: pointer;
+        white-space: nowrap;
+    }
+
+    .routing-key-save:hover, .routing-key-load:hover {
+        background: #5a6268;
+    }
+
+    /* Responsive behavior for routing key actions */
+    @media (max-width: 600px) {
+        .routing-key-actions {
+            flex-direction: column;
+        }
+
+        .routing-key-save, .routing-key-load {
+            width: 100%;
+            margin-bottom: 3px;
+        }
+    }
+    /* Scenario Management Enhancements */
+    .scenario-set-actions {
+        display: flex;
+        gap: 10px;
+        margin-top: 15px;
+        flex-wrap: wrap;
+    }
+    .scenario-set-item {
+        padding: 8px 12px;
+        cursor: pointer;
+        border-bottom: 1px solid #f0f0f0;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    .scenario-set-item:hover {
+        background-color: #f5f5f5;
+    }
+    .scenario-set-name {
+        font-weight: bold;
+        color: #333;
+    }
+    .scenario-set-count {
+        color: #666;
+        font-size: 0.9em;
+    }
+    .scenario-set-delete {
+        background: #dc3545;
+        color: white;
+        border: none;
+        border-radius: 3px;
+        padding: 2px 6px;
+        font-size: 0.8em;
+        cursor: pointer;
+        margin-left: 8px;
+    }
+
+    /* Toast Messages */
     .toast-container {
         position: fixed;
         bottom: 20px;
@@ -382,12 +508,32 @@
       animation: slideOut 0.3s ease forwards;
     }
 
+    /* Input validation styles */
+    .field-error {
+        border-color: #dc3545 !important;
+        background-color: #fff5f5;
+    }
+    .field-success {
+        border-color: #28a745 !important;
+    }
+    .validation-message {
+        font-size: 0.8em;
+        margin-top: 2px;
+        margin-left: 130px;
+    }
+    .validation-error {
+        color: #dc3545;
+    }
+    .validation-success {
+        color: #28a745;
+    }
+
 </style>
 </head>
 <body>
     <header class="title-group">
         <h1 class="main-title">KrakenDuty</h1>
-        <h1 class="sub-title">PagerDuty Event V2 Sender <span class="version">v1.1 (unofficial)</span></h1>
+        <h1 class="sub-title">PagerDuty Event V2 Sender <span class="version">v1.3 (unofficial)</span></h1>
         <h2>Multiple Scenarios at once - Script Generator</h2>
     </header>
 
@@ -395,7 +541,15 @@
         <h2>Common Fields <span class="subtext">Will be applied to every event</span></h2>
         <div id="routing-key-field" class="field">
             <label for="routing_key">Routing Key:</label>
-            <input type="text" id="routing_key" placeholder="YOUR ROUTING KEY HERE">
+            <div class="routing-key-container" style="flex: 1;">
+                <input type="text" id="routing_key" placeholder="PASTE YOUR ROUTING KEY HERE">
+                <div id="routing-key-dropdown" class="routing-key-dropdown"></div>
+                <div class="routing-key-actions">
+                    <button type="button" class="routing-key-save" onclick="saveCurrentRoutingKey()">Save Key</button>
+                    <button type="button" class="routing-key-load" onclick="toggleRoutingKeyDropdown()">Load Saved</button>
+                    <button type="button" class="routing-key-load" onclick="manageRoutingKeysUI()">Manage Keys</button>
+                </div>
+            </div>
         </div>
         <div id="event-action-field" class="field">
             <label for="event_action">Event Action:</label>
@@ -423,9 +577,11 @@
         <div class="scenario-actions">
             <button onclick="addScenario()">Add Scenario</button>
             <button class="save-all-scenarios" onclick="clearAllScenariosUI()">Clear All Scenarios</button>
-            <button class="save-all-scenarios" onclick="saveAllScenarios()">Save All Scenarios</button>
-            <button onclick="loadSavedScenariosUI()">Load <b>Saved</b> Scenarios</button>
-            <button onclick="clearSavedScenariosUI()">Remove <b>Saved</b> Scenarios</button>
+        </div>
+        <div class="scenario-set-actions">
+            <button class="save-all-scenarios" onclick="saveScenarioSet()">Save Scenario Set</button>
+            <button onclick="loadScenarioSetUI()">Load Scenario Set</button>
+            <button onclick="manageScenarioSetsUI()">Manage Scenario Sets</button>
         </div>
     </div>
 
@@ -452,6 +608,218 @@
     </div>
 
     <script>
+        // Enhanced Data Management System
+        // Enhanced Data Management System with duplicate name prevention
+        class KrakenDutyStorage {
+            constructor() {
+                this.storageKey = 'krakenduty_data';
+                this.init();
+            }
+
+            init() {
+                try {
+                    const data = localStorage.getItem(this.storageKey);
+                    if (!data) {
+                        this.resetStorage();
+                    }
+                } catch (error) {
+                    console.error('Storage initialization failed:', error);
+                    this.resetStorage();
+                }
+            }
+
+            resetStorage() {
+                const defaultData = {
+                    routingKeys: {},
+                    scenarioSets: {},
+                    version: '1.2'
+                };
+                localStorage.setItem(this.storageKey, JSON.stringify(defaultData));
+            }
+
+            getData() {
+                try {
+                    return JSON.parse(localStorage.getItem(this.storageKey)) || {};
+                } catch (error) {
+                    console.error('Failed to parse storage data:', error);
+                    this.resetStorage();
+                    return this.getData();
+                }
+            }
+
+            saveData(data) {
+                try {
+                    localStorage.setItem(this.storageKey, JSON.stringify(data));
+                    return true;
+                } catch (error) {
+                    console.error('Failed to save data:', error);
+                    return false;
+                }
+            }
+
+            // Enhanced Routing Key Management with duplicate prevention
+            isRoutingKeyNameExists(name, excludeId = null) {
+                const data = this.getData();
+                const normalizedName = name.trim().toLowerCase();
+                return Object.values(data.routingKeys || {}).some(key =>
+                    key.name.toLowerCase() === normalizedName && key.id !== excludeId
+                );
+            }
+
+            saveRoutingKey(name, key) {
+                const trimmedName = name.trim();
+                if (this.isRoutingKeyNameExists(trimmedName)) {
+                    throw new Error(`A routing key with the name "${trimmedName}" already exists. Please choose a different name.`);
+                }
+
+                const data = this.getData();
+                const id = this.generateId();
+                data.routingKeys[id] = {
+                    id,
+                    name: trimmedName,
+                    key: key,
+                    created: new Date().toISOString(),
+                    lastUsed: new Date().toISOString()
+                };
+                return this.saveData(data) ? id : null;
+            }
+
+            updateRoutingKey(id, name, key) {
+                const trimmedName = name.trim();
+                if (this.isRoutingKeyNameExists(trimmedName, id)) {
+                    throw new Error(`A routing key with the name "${trimmedName}" already exists. Please choose a different name.`);
+                }
+
+                const data = this.getData();
+                if (data.routingKeys[id]) {
+                    data.routingKeys[id].name = trimmedName;
+                    data.routingKeys[id].key = key;
+                    data.routingKeys[id].lastUsed = new Date().toISOString();
+                    return this.saveData(data);
+                }
+                return false;
+            }
+
+            getRoutingKeys() {
+                const data = this.getData();
+                return Object.values(data.routingKeys || {}).sort((a, b) =>
+                    new Date(b.lastUsed) - new Date(a.lastUsed)
+                );
+            }
+
+            getRoutingKey(id) {
+                const data = this.getData();
+                return data.routingKeys[id] || null;
+            }
+
+            updateRoutingKeyUsage(id) {
+                const data = this.getData();
+                if (data.routingKeys[id]) {
+                    data.routingKeys[id].lastUsed = new Date().toISOString();
+                    this.saveData(data);
+                }
+            }
+
+            deleteRoutingKey(id) {
+                const data = this.getData();
+                delete data.routingKeys[id];
+                return this.saveData(data);
+            }
+
+            // Enhanced Scenario Set Management with duplicate prevention
+            isScenarioSetNameExists(name, excludeId = null) {
+                const data = this.getData();
+                const normalizedName = name.trim().toLowerCase();
+                return Object.values(data.scenarioSets || {}).some(set =>
+                    set.name.toLowerCase() === normalizedName && set.id !== excludeId
+                );
+            }
+
+            saveScenarioSet(name, scenarios, routingKeyId = null) {
+                const trimmedName = name.trim();
+                if (this.isScenarioSetNameExists(trimmedName)) {
+                    throw new Error(`A scenario set with the name "${trimmedName}" already exists. Please choose a different name.`);
+                }
+
+                const data = this.getData();
+                const id = this.generateId();
+                data.scenarioSets[id] = {
+                    id,
+                    name: trimmedName,
+                    scenarios,
+                    routingKeyId,
+                    created: new Date().toISOString(),
+                    lastUsed: new Date().toISOString()
+                };
+                return this.saveData(data) ? id : null;
+            }
+
+            updateScenarioSet(id, name, scenarios, routingKeyId = null) {
+                const trimmedName = name.trim();
+                if (this.isScenarioSetNameExists(trimmedName, id)) {
+                    throw new Error(`A scenario set with the name "${trimmedName}" already exists. Please choose a different name.`);
+                }
+
+                const data = this.getData();
+                if (data.scenarioSets[id]) {
+                    data.scenarioSets[id].name = trimmedName;
+                    data.scenarioSets[id].scenarios = scenarios;
+                    data.scenarioSets[id].routingKeyId = routingKeyId;
+                    data.scenarioSets[id].lastUsed = new Date().toISOString();
+                    return this.saveData(data);
+                }
+                return false;
+            }
+
+            getScenarioSets() {
+                const data = this.getData();
+                return Object.values(data.scenarioSets || {}).sort((a, b) =>
+                    new Date(b.lastUsed) - new Date(a.lastUsed)
+                );
+            }
+
+            getScenarioSet(id) {
+                const data = this.getData();
+                return data.scenarioSets[id] || null;
+            }
+
+            updateScenarioSetUsage(id) {
+                const data = this.getData();
+                if (data.scenarioSets[id]) {
+                    data.scenarioSets[id].lastUsed = new Date().toISOString();
+                    this.saveData(data);
+                }
+            }
+
+            deleteScenarioSet(id) {
+                const data = this.getData();
+                delete data.scenarioSets[id];
+                return this.saveData(data);
+            }
+
+            generateId() {
+                return Date.now().toString(36) + Math.random().toString(36).substr(2);
+            }
+
+            // Utility method to suggest alternative names
+            suggestAlternativeName(baseName, type = 'routingKey') {
+                const checkMethod = type === 'routingKey' ? 'isRoutingKeyNameExists' : 'isScenarioSetNameExists';
+                let counter = 1;
+                let suggestedName = `${baseName} (${counter})`;
+
+                while (this[checkMethod](suggestedName)) {
+                    counter++;
+                    suggestedName = `${baseName} (${counter})`;
+                }
+
+                return suggestedName;
+            }
+        }
+
+        // Initialize storage system
+        const storage = new KrakenDutyStorage();
+
+        // Scenario templates remain the same
         const scenarioTemplates = {
             application: {summary:"Application unresponsive - multiple user reports",severity:"error",source:"app-server-02.us-east-4.com",component:"E-commerce Application",group:"Application Stack",class:"Availability",customDetails:{error_rate:"15%",response_time:"10s",affected_users:"500+"}},
             container:{summary:"Container orchestration system failure - multiple pods crashing",severity:"critical",source:"k8s-cluster-01.us-east-1.com",component:"Kubernetes Cluster",group:"Container Platform",class:"Availability",customDetails:{failed_pods:"12",memory_usage:"93%",restart_count:"25"}},
@@ -461,8 +829,13 @@
             login: {summary:"Multiple failed login attempts detected",severity:"error",source:"auth-server-01.us-west-1.com",component:"Authentication Service",group:"Login",class:"Security Threat",customDetails:{failed_attempts:"100+",affected_accounts:"25",source_ip:"192.168.1.100"}},
             network: {summary:"Network connectivity issues affecting multiple services",severity:"critical",source:"core-switch-01.us-west-2.com",component:"Core Network Infrastructure",group:"Network",class:"Connectivity",customDetails:{packet_loss:"25%",affected_vlans:"VLAN 10, VLAN 20",bandwidth_utilization:"90%"}}
         };
-        let realRoutingKey = ''; // Store the actual routing key
 
+        let currentRoutingKey = '';
+        let currentRoutingKeyId = null;
+
+        /**
+         * Enhanced routing key management with persistent storage
+         */
         function maskRoutingKey(key) {
             if (!key) return '';
             const maskLength = Math.min(20, key.length);
@@ -474,23 +847,23 @@
             const cursorPosition = inputField.selectionStart;
             const currentValue = inputField.value;
 
-            // If the value is different from the masked version
-            if (currentValue !== maskRoutingKey(realRoutingKey)) {
-                // If it's a completely new value (like on paste or initial input)
+            // Update current routing key
+            if (currentValue !== maskRoutingKey(currentRoutingKey)) {
                 if (!currentValue.includes('•')) {
-                    realRoutingKey = currentValue;
-                }
-                // If we're editing after the masked portion
-                else {
+                    currentRoutingKey = currentValue;
+                    currentRoutingKeyId = null; // Reset ID when manually typing
+                } else {
                     const visiblePart = currentValue.slice(20);
-                    realRoutingKey = realRoutingKey.slice(0, 20) + visiblePart;
+                    currentRoutingKey = currentRoutingKey.slice(0, 20) + visiblePart;
                 }
             }
 
+            // Validate routing key
+            validateRoutingKey(currentRoutingKey);
+
             // Show masked version in UI
             setTimeout(() => {
-                inputField.value = maskRoutingKey(realRoutingKey);
-                // Maintain cursor position
+                inputField.value = maskRoutingKey(currentRoutingKey);
                 if (cursorPosition > 20) {
                     inputField.selectionStart = cursorPosition;
                     inputField.selectionEnd = cursorPosition;
@@ -498,33 +871,520 @@
             }, 0);
         }
 
+        function validateRoutingKey(key) {
+            const field = document.getElementById('routing_key');
+            const existingMessage = field.parentNode.querySelector('.validation-message');
+
+            if (existingMessage) {
+                existingMessage.remove();
+            }
+
+            if (!key) {
+                field.classList.remove('field-success', 'field-error');
+                return;
+            }
+
+            // Basic validation - PagerDuty routing keys are typically 32 characters
+            if (key.length == 32) {
+              field.classList.add('field-success');
+              field.classList.remove('field-error');
+              const message = document.createElement('div');
+              message.className = 'validation-message validation-success';
+              message.textContent = 'Routing key format looks good';
+              field.parentNode.appendChild(message);
+            } else {
+                field.classList.add('field-error');
+                field.classList.remove('field-success');
+                const message = document.createElement('div');
+                message.className = 'validation-message validation-error';
+                message.textContent = 'Routing key appears to be incomplete (typically 32 characters)';
+                field.parentNode.appendChild(message);
+            }
+        }
+
+        function saveCurrentRoutingKey() {
+            if (!currentRoutingKey) {
+                showToast('Please enter a routing key first', 'warning');
+                return;
+            }
+
+            const name = prompt('Enter a name for this routing key:');
+            if (!name || !name.trim()) {
+                showToast('Please provide a name for the routing key', 'warning');
+                return;
+            }
+
+            try {
+                const id = storage.saveRoutingKey(name, currentRoutingKey);
+                if (id) {
+                    currentRoutingKeyId = id;
+                    showToast(`Routing key "${name.trim()}" saved successfully!`, 'success');
+                } else {
+                    showToast('Failed to save routing key', 'error');
+                }
+            } catch (error) {
+                // Handle duplicate name error
+                const suggestedName = storage.suggestAlternativeName(name.trim(), 'routingKey');
+                const useAlternative = confirm(`${error.message}\n\nWould you like to use "${suggestedName}" instead?`);
+
+                if (useAlternative) {
+                    try {
+                        const id = storage.saveRoutingKey(suggestedName, currentRoutingKey);
+                        if (id) {
+                            currentRoutingKeyId = id;
+                            showToast(`Routing key "${suggestedName}" saved successfully!`, 'success');
+                        } else {
+                            showToast('Failed to save routing key', 'error');
+                        }
+                    } catch (secondError) {
+                        showToast(`Error: ${secondError.message}`, 'error');
+                    }
+                } else {
+                    showToast('Routing key not saved', 'info');
+                }
+            }
+        }
+
+        function toggleRoutingKeyDropdown() {
+            const dropdown = document.getElementById('routing-key-dropdown');
+            const keys = storage.getRoutingKeys();
+
+            if (keys.length === 0) {
+                showToast('No saved routing keys found', 'info');
+                return;
+            }
+
+            if (dropdown.style.display === 'block') {
+                dropdown.style.display = 'none';
+                return;
+            }
+
+            dropdown.innerHTML = '';
+            keys.forEach(keyData => {
+                const item = document.createElement('div');
+                item.className = 'routing-key-item';
+                item.innerHTML = `
+                    <div>
+                        <div class="routing-key-name">${escapeHtml(keyData.name)}</div>
+                        <div class="routing-key-preview">${maskRoutingKey(keyData.key)}</div>
+                    </div>
+                    <button class="routing-key-delete" onclick="deleteRoutingKey('${keyData.id}', event)">×</button>
+                `;
+
+                item.addEventListener('click', (e) => {
+                    if (e.target.classList.contains('routing-key-delete')) return;
+                    loadRoutingKey(keyData.id);
+                    dropdown.style.display = 'none';
+                });
+
+                dropdown.appendChild(item);
+            });
+
+            dropdown.style.display = 'block';
+        }
+
+        function loadRoutingKey(id) {
+            const keyData = storage.getRoutingKey(id);
+            if (!keyData) {
+                showToast('Routing key not found', 'error');
+                return;
+            }
+
+            currentRoutingKey = keyData.key;
+            currentRoutingKeyId = id;
+            document.getElementById('routing_key').value = maskRoutingKey(keyData.key);
+            storage.updateRoutingKeyUsage(id);
+            validateRoutingKey(keyData.key);
+            showToast(`Loaded routing key: ${keyData.name}`, 'success');
+            updatePayload();
+        }
+
+        function deleteRoutingKey(id, event) {
+            event.stopPropagation();
+            const keyData = storage.getRoutingKey(id);
+            if (!keyData) return;
+
+            if (confirm(`Delete routing key "${keyData.name}"?`)) {
+                if (storage.deleteRoutingKey(id)) {
+                    showToast(`Deleted routing key: ${keyData.name}`, 'success');
+                    toggleRoutingKeyDropdown(); // Refresh dropdown
+                    if (currentRoutingKeyId === id) {
+                        currentRoutingKey = '';
+                        currentRoutingKeyId = null;
+                        document.getElementById('routing_key').value = '';
+                    }
+                } else {
+                    showToast('Failed to delete routing key', 'error');
+                }
+            }
+        }
+
+        /**
+         * Enhanced scenario set management
+         */
+         function saveScenarioSet() {
+             const scenarios = document.querySelectorAll('.scenario');
+             if (scenarios.length === 0) {
+                 showToast('No scenarios to save!', 'warning');
+                 return;
+             }
+
+             const name = prompt('Enter a name for this scenario set:');
+             if (!name || !name.trim()) {
+                 showToast('Please provide a name for the scenario set', 'warning');
+                 return;
+             }
+
+             try {
+                 const scenariosData = Array.from(scenarios).map(scenario => {
+                     const scenarioId = scenario.id;
+                     return extractScenarioData(scenarioId);
+                 });
+
+                 const id = storage.saveScenarioSet(name, scenariosData, currentRoutingKeyId);
+                 if (id) {
+                     showToast(`Scenario set "${name.trim()}" saved successfully!`, 'success');
+                 } else {
+                     showToast('Failed to save scenario set', 'error');
+                 }
+             } catch (error) {
+                 if (error.message.includes('already exists')) {
+                     // Handle duplicate name error
+                     const suggestedName = storage.suggestAlternativeName(name.trim(), 'scenarioSet');
+                     const useAlternative = confirm(`${error.message}\n\nWould you like to use "${suggestedName}" instead?`);
+
+                     if (useAlternative) {
+                         try {
+                             const scenariosData = Array.from(scenarios).map(scenario => {
+                                 const scenarioId = scenario.id;
+                                 return extractScenarioData(scenarioId);
+                             });
+
+                             const id = storage.saveScenarioSet(suggestedName, scenariosData, currentRoutingKeyId);
+                             if (id) {
+                                 showToast(`Scenario set "${suggestedName}" saved successfully!`, 'success');
+                             } else {
+                                 showToast('Failed to save scenario set', 'error');
+                             }
+                         } catch (secondError) {
+                             showToast(`Error: ${secondError.message}`, 'error');
+                         }
+                     } else {
+                         showToast('Scenario set not saved', 'info');
+                     }
+                 } else {
+                     console.error('Error saving scenario set:', error);
+                     showToast(`Error saving scenario set: ${error.message}`, 'error');
+                 }
+             }
+         }
+
+        function loadScenarioSetUI() {
+            const sets = storage.getScenarioSets();
+            if (sets.length === 0) {
+                showToast('No saved scenario sets found', 'info');
+                return;
+            }
+
+            const setNames = sets.map(set => `${set.name} (${set.scenarios.length} scenarios)`);
+            const selectedIndex = prompt(`Select a scenario set to load:\n${setNames.map((name, i) => `${i + 1}. ${name}`).join('\n')}\n\nEnter the number:`);
+
+            if (selectedIndex && !isNaN(selectedIndex)) {
+                const index = parseInt(selectedIndex) - 1;
+                if (index >= 0 && index < sets.length) {
+                    loadScenarioSet(sets[index].id);
+                } else {
+                    showToast('Invalid selection', 'warning');
+                }
+            }
+        }
+
+        // Enhanced management UI with rename functionality
+        function manageRoutingKeysUI() {
+            const keys = storage.getRoutingKeys();
+            if (keys.length === 0) {
+                showToast('No saved routing keys found', 'info');
+                return;
+            }
+
+            const keyList = keys.map((key, i) =>
+                `${i + 1}. ${key.name} - Created: ${new Date(key.created).toLocaleDateString()}`
+            ).join('\n');
+
+            const action = prompt(`Routing Key Management:\n${keyList}\n\nEnter 'delete X' to delete key X, 'rename X' to rename key X, or click 'cancel' to exit:`);
+
+            if (!action || action.toLowerCase() === 'cancel') {
+                return; // User cancelled or entered 'cancel'
+            }
+
+            if (action.toLowerCase().startsWith('delete ')) {
+                const index = parseInt(action.split(' ')[1]) - 1;
+                if (index >= 0 && index < keys.length) {
+                    const keyToDelete = keys[index];
+                    if (confirm(`Delete routing key "${keyToDelete.name}"?`)) {
+                        if (storage.deleteRoutingKey(keyToDelete.id)) {
+                            showToast(`Deleted routing key: ${keyToDelete.name}`, 'success');
+                            if (currentRoutingKeyId === keyToDelete.id) {
+                                currentRoutingKey = '';
+                                currentRoutingKeyId = null;
+                                document.getElementById('routing_key').value = '';
+                            }
+                        } else {
+                            showToast('Failed to delete routing key', 'error');
+                        }
+                    }
+                } else {
+                    showToast('Invalid selection', 'warning');
+                }
+            } else if (action.toLowerCase().startsWith('rename ')) {
+                const index = parseInt(action.split(' ')[1]) - 1;
+                if (index >= 0 && index < keys.length) {
+                    const keyToRename = keys[index];
+                    const newName = prompt(`Enter new name for "${keyToRename.name}":`, keyToRename.name);
+                    if (newName && newName.trim() && newName.trim() !== keyToRename.name) {
+                        try {
+                            if (storage.updateRoutingKey(keyToRename.id, newName, keyToRename.key)) {
+                                showToast(`Renamed routing key to: ${newName.trim()}`, 'success');
+                            } else {
+                                showToast('Failed to rename routing key', 'error');
+                            }
+                        } catch (error) {
+                            showToast(`Error: ${error.message}`, 'error');
+                        }
+                    }
+                } else {
+                    showToast('Invalid selection', 'warning');
+                }
+            } else {
+                // Invalid command entered
+                showToast('Wrong choice. Please enter "delete X", "rename X", or click "cancel".', 'warning');
+            }
+        }
+
+        function loadScenarioSet(id) {
+            const setData = storage.getScenarioSet(id);
+            if (!setData) {
+                showToast('Scenario set not found', 'error');
+                return;
+            }
+
+            try {
+                // Load associated routing key if available
+                if (setData.routingKeyId) {
+                    const keyData = storage.getRoutingKey(setData.routingKeyId);
+                    if (keyData) {
+                        currentRoutingKey = keyData.key;
+                        currentRoutingKeyId = setData.routingKeyId;
+                        document.getElementById('routing_key').value = maskRoutingKey(keyData.key);
+                        storage.updateRoutingKeyUsage(setData.routingKeyId);
+                    }
+                }
+
+                // Clear existing scenarios
+                document.getElementById('scenarios-container').innerHTML = '';
+
+                // Load scenarios
+                setData.scenarios.forEach((scenarioData, index) => {
+                    const scenarioId = createScenarioFromData(scenarioData, index + 1);
+                    populateScenarioData(scenarioId, scenarioData);
+                });
+
+                storage.updateScenarioSetUsage(id);
+                showToast(`Loaded scenario set: ${setData.name}`, 'success');
+                updatePayload();
+            } catch (error) {
+                console.error('Error loading scenario set:', error);
+                showToast('Error loading scenario set!', 'error');
+            }
+        }
+
+        function manageScenarioSetsUI() {
+            const sets = storage.getScenarioSets();
+            if (sets.length === 0) {
+                showToast('No saved scenario sets found', 'info');
+                return;
+            }
+
+            const setList = sets.map((set, i) =>
+                `${i + 1}. ${set.name} (${set.scenarios.length} scenarios) - Created: ${new Date(set.created).toLocaleDateString()}`
+            ).join('\n');
+
+            const action = prompt(`Scenario Set Management:\n${setList}\n\nEnter 'delete X' to delete set X, 'rename X' to rename set X, or click 'cancel' to exit:`);
+
+            if (!action || action.toLowerCase() === 'cancel') {
+                return; // User cancelled or entered 'cancel'
+            }
+
+            if (action.toLowerCase().startsWith('delete ')) {
+                const index = parseInt(action.split(' ')[1]) - 1;
+                if (index >= 0 && index < sets.length) {
+                    const setToDelete = sets[index];
+                    if (confirm(`Delete scenario set "${setToDelete.name}"?`)) {
+                        if (storage.deleteScenarioSet(setToDelete.id)) {
+                            showToast(`Deleted scenario set: ${setToDelete.name}`, 'success');
+                        } else {
+                            showToast('Failed to delete scenario set', 'error');
+                        }
+                    }
+                } else {
+                    showToast('Invalid selection', 'warning');
+                }
+            } else if (action.toLowerCase().startsWith('rename ')) {
+                const index = parseInt(action.split(' ')[1]) - 1;
+                if (index >= 0 && index < sets.length) {
+                    const setToRename = sets[index];
+                    const newName = prompt(`Enter new name for "${setToRename.name}":`, setToRename.name);
+                    if (newName && newName.trim() && newName.trim() !== setToRename.name) {
+                        try {
+                            if (storage.updateScenarioSet(setToRename.id, newName, setToRename.scenarios, setToRename.routingKeyId)) {
+                                showToast(`Renamed scenario set to: ${newName.trim()}`, 'success');
+                            } else {
+                                showToast('Failed to rename scenario set', 'error');
+                            }
+                        } catch (error) {
+                            showToast(`Error: ${error.message}`, 'error');
+                        }
+                    }
+                } else {
+                    showToast('Invalid selection', 'warning');
+                }
+            } else {
+                // Invalid command entered
+                showToast('Wrong choice. Please enter "delete X", "rename X", or click "cancel".', 'warning');
+            }
+        }
+
+        /**
+         * Enhanced scenario management functions
+         */
+        function extractScenarioData(scenarioId) {
+            const componentField = document.getElementById(`${scenarioId}-component-field`);
+            const groupField = document.getElementById(`${scenarioId}-group-field`);
+            const classField = document.getElementById(`${scenarioId}-class-field`);
+
+            return {
+                type: document.getElementById(`${scenarioId}-type`).value,
+                summary: document.getElementById(`${scenarioId}-summary`).value,
+                severity: document.getElementById(`${scenarioId}-severity`).value,
+                source: document.getElementById(`${scenarioId}-source`).value,
+                component: componentField && componentField.style.display !== 'none' ?
+                    document.getElementById(`${scenarioId}-component`).value : '',
+                group: groupField && groupField.style.display !== 'none' ?
+                    document.getElementById(`${scenarioId}-group`).value : '',
+                class: classField && classField.style.display !== 'none' ?
+                    document.getElementById(`${scenarioId}-class`).value : '',
+                removedFields: {
+                    component: !componentField || componentField.style.display === 'none',
+                    group: !groupField || groupField.style.display === 'none',
+                    class: !classField || classField.style.display === 'none'
+                },
+                customDetails: getCustomDetails(scenarioId)
+            };
+        }
+
+        function createScenarioFromData(scenarioData, scenarioNumber) {
+            const container = document.getElementById('scenarios-container');
+            const scenarioId = `scenario-${Date.now()}-${scenarioNumber}`;
+
+            const scenarioHtml = createScenarioHTML(scenarioId, scenarioNumber);
+            container.insertAdjacentHTML('beforeend', scenarioHtml);
+
+            return scenarioId;
+        }
+
+        function populateScenarioData(scenarioId, scenarioData) {
+            // Set basic fields
+            document.getElementById(`${scenarioId}-type`).value = scenarioData.type;
+            document.getElementById(`${scenarioId}-summary`).value = scenarioData.summary;
+            document.getElementById(`${scenarioId}-severity`).value = scenarioData.severity;
+            document.getElementById(`${scenarioId}-source`).value = scenarioData.source;
+
+            // Handle optional fields
+            const componentField = document.getElementById(`${scenarioId}-component-field`);
+            const groupField = document.getElementById(`${scenarioId}-group-field`);
+            const classField = document.getElementById(`${scenarioId}-class-field`);
+
+            if (scenarioData.removedFields?.component) {
+                componentField.style.display = 'none';
+            } else {
+                document.getElementById(`${scenarioId}-component`).value = scenarioData.component || '';
+            }
+
+            if (scenarioData.removedFields?.group) {
+                groupField.style.display = 'none';
+            } else {
+                document.getElementById(`${scenarioId}-group`).value = scenarioData.group || '';
+            }
+
+            if (scenarioData.removedFields?.class) {
+                classField.style.display = 'none';
+            } else {
+                document.getElementById(`${scenarioId}-class`).value = scenarioData.class || '';
+            }
+
+            // Handle custom details
+            if (Object.keys(scenarioData.customDetails || {}).length > 0) {
+                const customDetailsContainer = document.getElementById(`${scenarioId}-custom-details`);
+                customDetailsContainer.style.display = 'block';
+                customDetailsContainer.innerHTML = `<h3>Custom Details for Scenario ${scenarioData.scenarioNumber || 1}</h3>`;
+
+                Object.entries(scenarioData.customDetails).forEach(([key, value]) => {
+                    const fieldId = `${scenarioId}-custom-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+                    customDetailsContainer.insertAdjacentHTML('beforeend', `
+                        <div class="custom-field" id="${fieldId}">
+                            <label for="${fieldId}-value">${escapeHtml(key)}:</label>
+                            <input type="text" id="${fieldId}-value" value="${escapeHtml(value)}">
+                            <button class="remove-field" onclick="removeCustomDetail('${scenarioId}', '${fieldId}')">x</button>
+                        </div>
+                    `);
+                });
+
+                customDetailsContainer.insertAdjacentHTML('beforeend', `
+                    <div id="${scenarioId}-extra-custom-details"></div>
+                    <button class="add-customdetail" onclick="addCustomDetailField('${scenarioId}')">Add Custom Detail</button>
+                `);
+
+                const toggleButton = customDetailsContainer.previousElementSibling;
+                toggleButton.textContent = `Remove Custom Details from Scenario ${scenarioData.scenarioNumber || 1}`;
+            }
+
+            // Add event listeners
+            addListenersToElement(document.getElementById(scenarioId));
+        }
+
+        /**
+         * Utility functions
+         */
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
         function addListenersToElement(element) {
             element.querySelectorAll('input, select').forEach(input => {
                 input.addEventListener('change', updatePayload);
 
                 if (input.id === 'routing_key') {
-                    // Remove any existing listeners
                     input.removeEventListener('input', handleRoutingKeyInput);
-                    // Add the new input handler
                     input.addEventListener('input', handleRoutingKeyInput);
 
-                    // Handle paste events
                     input.addEventListener('paste', (e) => {
                         e.preventDefault();
                         const pastedText = (e.clipboardData || window.clipboardData).getData('text');
-                        realRoutingKey = pastedText; // Store complete key
+                        currentRoutingKey = pastedText;
+                        currentRoutingKeyId = null;
                         input.value = maskRoutingKey(pastedText);
+                        validateRoutingKey(pastedText);
                         updatePayload();
                     });
 
-                    // Prevent drag and drop
                     input.addEventListener('drop', (e) => {
                         e.preventDefault();
                     });
 
-                    // Initial masking if there's a value
                     if (input.value && !input.value.includes('•')) {
-                        realRoutingKey = input.value; // Store complete initial key
+                        currentRoutingKey = input.value;
                         input.value = maskRoutingKey(input.value);
                     }
                 } else {
@@ -533,114 +1393,64 @@
             });
         }
 
-        // Local Storage Functions
-        function clearAllScenariosUI() {
-          const scenarios = document.querySelectorAll('.scenario');
-
-          if (scenarios.length === 0) {
-              showToast('No scenarios to clear!', 'warning');
-              return;
-          }
-
-          const scenarioCount = scenarios.length;
-          const scenarioText = scenarioCount === 1 ? 'scenario' : 'scenarios';
-
-          document.getElementById('scenarios-container').innerHTML = '';
-          showToast(`Cleared ${scenarioCount} ${scenarioText} from view!<br>Keeping the default one though.`, 'success');
-
-          // Add one empty scenario after clearing all
-          addScenario();
-          }
-
-          function saveAllScenarios() {
-              const scenarios = document.querySelectorAll('.scenario');
-
-              if (scenarios.length === 0) {
-                  showToast('No scenarios to save!', 'warning');
-                  return;
-              }
-
-              // Use realRoutingKey instead of the input field value
-              if (!realRoutingKey) {
-                  showToast('Please enter a routing key before saving!', 'warning');
-                  return;
-              }
-
-              try {
-                  // Create a simple array of scenario data
-                  const scenariosToSave = Array.from(scenarios).map(scenario => {
-                      const scenarioId = scenario.id;
-                      const componentField = document.getElementById(`${scenarioId}-component-field`);
-                      const groupField = document.getElementById(`${scenarioId}-group-field`);
-                      const classField = document.getElementById(`${scenarioId}-class-field`);
-
-                      return {
-                          type: document.getElementById(`${scenarioId}-type`).value,
-                          summary: document.getElementById(`${scenarioId}-summary`).value,
-                          severity: document.getElementById(`${scenarioId}-severity`).value,
-                          source: document.getElementById(`${scenarioId}-source`).value,
-                          // Check if fields exist and are visible
-                          component: componentField && componentField.style.display !== 'none' ?
-                              document.getElementById(`${scenarioId}-component`).value : '',
-                          group: groupField && groupField.style.display !== 'none' ?
-                              document.getElementById(`${scenarioId}-group`).value : '',
-                          class: classField && classField.style.display !== 'none' ?
-                              document.getElementById(`${scenarioId}-class`).value : '',
-                          // Track which fields were removed
-                          removedFields: {
-                              component: !componentField || componentField.style.display === 'none',
-                              group: !groupField || groupField.style.display === 'none',
-                              class: !classField || classField.style.display === 'none'
-                          },
-                          customDetails: getCustomDetails(scenarioId)
-                      };
-                  });
-
-                  // Save to localStorage using the real routing key
-                  localStorage.setItem('pdScenarios', JSON.stringify({
-                      routingKey: realRoutingKey, // Save the real routing key, not the masked one
-                      scenarios: scenariosToSave
-                  }));
-
-                  showToast(`Saved ${scenarios.length} scenario(s)!`, 'success');
-              } catch (error) {
-                  console.error('Error saving scenarios:', error);
-                  showToast('Error saving scenarios!', 'error');
-              }
-          }
-
-          function getCustomDetails(scenarioId) {
-              const customDetailsContainer = document.getElementById(`${scenarioId}-custom-details`);
-              if (customDetailsContainer.style.display === 'none') {
-                  return {};
-              }
-
-              const details = {};
-              customDetailsContainer.querySelectorAll('.custom-field').forEach(field => {
-                  const label = field.querySelector('label').textContent.replace(':', '').trim();
-                  const value = field.querySelector('input:last-of-type').value;
-                  if (label && value) {
-                      details[label] = value;
-                  }
-              });
-              return details;
-          }
-
-        function clearSavedScenarios() {
-            const savedData = loadScenariosFromLocalStorage();
-            if (savedData.scenarios.length === 0) {
-                showToast('No saved scenarios to clear.', 'warning');
-                return false;
+        // Hide dropdown when clicking outside
+        document.addEventListener('click', (e) => {
+            const dropdown = document.getElementById('routing-key-dropdown');
+            const container = e.target.closest('.routing-key-container');
+            if (!container && dropdown) {
+                dropdown.style.display = 'none';
             }
-            localStorage.removeItem('pdScenarios');
-            return true;
+        });
+
+        function clearAllScenariosUI() {
+            const scenarios = document.querySelectorAll('.scenario');
+
+            if (scenarios.length === 0) {
+                showToast('No scenarios to clear!', 'warning');
+                return;
+            }
+
+            const scenarioCount = scenarios.length;
+            const scenarioText = scenarioCount === 1 ? 'scenario' : 'scenarios';
+
+            document.getElementById('scenarios-container').innerHTML = '';
+            showToast(`Cleared ${scenarioCount} ${scenarioText} from view!<br>Adding a fresh scenario.`, 'success');
+
+            addScenario();
+        }
+
+        function getCustomDetails(scenarioId) {
+            const customDetailsContainer = document.getElementById(`${scenarioId}-custom-details`);
+            if (customDetailsContainer.style.display === 'none') {
+                return {};
+            }
+
+            const details = {};
+            customDetailsContainer.querySelectorAll('.custom-field').forEach(field => {
+                const label = field.querySelector('label').textContent.replace(':', '').trim();
+                const value = field.querySelector('input:last-of-type').value;
+                if (label && value) {
+                    details[label] = value;
+                }
+            });
+            return details;
         }
 
         function addScenario() {
             const container = document.getElementById('scenarios-container');
             const scenarioId = `scenario-${Date.now()}`;
             const scenarioCount = container.children.length + 1;
-            const scenarioHtml = `
+
+            const scenarioHtml = createScenarioHTML(scenarioId, scenarioCount);
+            container.insertAdjacentHTML('beforeend', scenarioHtml);
+
+            updateScenarioFields(scenarioId);
+            addListenersToElement(document.getElementById(scenarioId));
+            updatePayload();
+        }
+
+        function createScenarioHTML(scenarioId, scenarioCount) {
+            return `
                 <div id="${scenarioId}" class="scenario">
                     <div class="scenario-header colored-header">
                         <span class="scenario-title">Scenario <span class="scenario-number">${scenarioCount}</span>:</span>
@@ -660,7 +1470,7 @@
                     <div class="scenario-details">
                         <div class="field">
                             <label for="${scenarioId}-summary">Summary:</label>
-                            <input type="text" id="${scenarioId}-summary">
+                            <input type="text" id="${scenarioId}-summary" required>
                         </div>
                         <div class="field">
                             <label for="${scenarioId}-severity">Severity:</label>
@@ -673,7 +1483,7 @@
                         </div>
                         <div class="field">
                             <label for="${scenarioId}-source">Source:</label>
-                            <input type="text" id="${scenarioId}-source">
+                            <input type="text" id="${scenarioId}-source" required>
                         </div>
                         <div id="${scenarioId}-component-field" class="field">
                             <label for="${scenarioId}-component">Component:</label>
@@ -696,170 +1506,6 @@
                     </div>
                 </div>
             `;
-            container.insertAdjacentHTML('beforeend', scenarioHtml);
-            updateScenarioFields(scenarioId);
-            addListenersToElement(document.getElementById(scenarioId));
-            updatePayload();
-        }
-
-        function loadSavedScenariosUI() {
-            const savedData = localStorage.getItem('pdScenarios');
-            if (!savedData) {
-                showToast('No saved scenarios found!', 'warning');
-                return;
-            }
-
-            try {
-                const { routingKey, scenarios } = JSON.parse(savedData);
-
-                // Set both the real and masked routing key
-                realRoutingKey = routingKey; // Store the real key
-                document.getElementById('routing_key').value = maskRoutingKey(routingKey); // Show masked version
-
-                document.getElementById('scenarios-container').innerHTML = '';
-
-                scenarios.forEach((scenario, index) => {
-                    const container = document.getElementById('scenarios-container');
-                    const scenarioId = `scenario-${Date.now()}-${index}`;
-
-                    const scenarioHtml = `
-                        <div id="${scenarioId}" class="scenario">
-                            <div class="scenario-header colored-header">
-                                <span class="scenario-title">Scenario <span class="scenario-number">${index + 1}</span>:</span>
-                                <div class="scenario-type-container">
-                                    <select id="${scenarioId}-type" class="scenario-type bold-select">
-                                        <option value="application">Application Issues</option>
-                                        <option value="container">Container Issues</option>
-                                        <option value="cpu">CPU Issues</option>
-                                        <option value="database">Database Issues</option>
-                                        <option value="disk">Disk Issues</option>
-                                        <option value="login">Login Issues</option>
-                                        <option value="network">Network Issues</option>
-                                    </select>
-                                    <button class="remove-scenario" onclick="removeScenario('${scenarioId}')">Remove</button>
-                                </div>
-                            </div>
-                            <div class="scenario-details">
-                                <div class="field">
-                                    <label for="${scenarioId}-summary">Summary:</label>
-                                    <input type="text" id="${scenarioId}-summary">
-                                </div>
-                                <div class="field">
-                                    <label for="${scenarioId}-severity">Severity:</label>
-                                    <select id="${scenarioId}-severity">
-                                        <option value="critical">Critical</option>
-                                        <option value="error">Error</option>
-                                        <option value="warning">Warning</option>
-                                        <option value="info">Info</option>
-                                    </select>
-                                </div>
-                                <div class="field">
-                                    <label for="${scenarioId}-source">Source:</label>
-                                    <input type="text" id="${scenarioId}-source">
-                                </div>
-                                <div id="${scenarioId}-component-field" class="field" ${scenario.removedFields?.component ? 'style="display: none;"' : ''}>
-                                    <label for="${scenarioId}-component">Component:</label>
-                                    <input type="text" id="${scenarioId}-component">
-                                    <button class="remove-field" onclick="removeField('${scenarioId}-component-field')">x</button>
-                                </div>
-                                <div id="${scenarioId}-group-field" class="field" ${scenario.removedFields?.group ? 'style="display: none;"' : ''}>
-                                    <label for="${scenarioId}-group">Group:</label>
-                                    <input type="text" id="${scenarioId}-group">
-                                    <button class="remove-field" onclick="removeField('${scenarioId}-group-field')">x</button>
-                                </div>
-                                <div id="${scenarioId}-class-field" class="field" ${scenario.removedFields?.class ? 'style="display: none;"' : ''}>
-                                    <label for="${scenarioId}-class">Class:</label>
-                                    <input type="text" id="${scenarioId}-class">
-                                    <button class="remove-field" onclick="removeField('${scenarioId}-class-field')">x</button>
-                                </div>
-                                <div id="${scenarioId}-extra-fields"></div>
-                            </div>
-                        </div>
-                    `;
-
-                    container.insertAdjacentHTML('beforeend', scenarioHtml);
-
-                    // Add the custom details button and container
-                    const scenarioDetails = document.querySelector(`#${scenarioId} .scenario-details`);
-                    scenarioDetails.insertAdjacentHTML('beforeend', `
-                        <button class="toggle-custom-details" onclick="toggleCustomDetails('${scenarioId}')">Add Custom Details for Scenario ${index + 1}</button>
-                        <div id="${scenarioId}-custom-details" class="custom-details" style="display: none;">
-                            <h3>Custom Details for Scenario ${index + 1}</h3>
-                            <div id="${scenarioId}-extra-custom-details"></div>
-                            <button class="add-customdetail" onclick="addCustomDetailField('${scenarioId}')">Add Custom Detail</button>
-                        </div>
-                    `);
-
-                    // Set the values from saved data
-                    const newScenario = document.getElementById(scenarioId);
-                    document.getElementById(`${scenarioId}-type`).value = scenario.type;
-                    document.getElementById(`${scenarioId}-summary`).value = scenario.summary;
-                    document.getElementById(`${scenarioId}-severity`).value = scenario.severity;
-                    document.getElementById(`${scenarioId}-source`).value = scenario.source;
-
-                    if (!scenario.removedFields?.component) {
-                        document.getElementById(`${scenarioId}-component`).value = scenario.component || '';
-                    }
-                    if (!scenario.removedFields?.group) {
-                        document.getElementById(`${scenarioId}-group`).value = scenario.group || '';
-                    }
-                    if (!scenario.removedFields?.class) {
-                        document.getElementById(`${scenarioId}-class`).value = scenario.class || '';
-                    }
-
-                    // Handle custom details if they exist
-                    if (Object.keys(scenario.customDetails || {}).length > 0) {
-                        const customDetailsContainer = document.getElementById(`${scenarioId}-custom-details`);
-                        const extraCustomDetails = document.getElementById(`${scenarioId}-extra-custom-details`);
-                        customDetailsContainer.style.display = 'block';
-
-                        Object.entries(scenario.customDetails).forEach(([key, value]) => {
-                            const fieldId = `${scenarioId}-custom-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-                            extraCustomDetails.insertAdjacentHTML('beforebegin', `
-                                <div class="custom-field" id="${fieldId}">
-                                    <label for="${fieldId}-value">${key}:</label>
-                                    <input type="text" id="${fieldId}-value" value="${value}">
-                                    <button class="remove-field" onclick="removeCustomDetail('${scenarioId}', '${fieldId}')">x</button>
-                                </div>
-                            `);
-                        });
-
-                        const toggleButton = customDetailsContainer.previousElementSibling;
-                        toggleButton.textContent = `Remove Custom Details from Scenario ${index + 1}`;
-                    }
-
-                    addListenersToElement(newScenario);
-                });
-
-                updatePayload();
-                showToast(`Loaded ${scenarios.length} saved scenario(s)!`, 'success');
-            } catch (error) {
-                console.error('Error loading saved scenarios:', error);
-                showToast('Error loading saved scenarios!', 'error');
-            }
-        }
-
-        function clearSavedScenariosUI() {
-            const savedData = localStorage.getItem('pdScenarios');
-
-            if (!savedData) {
-                showToast('No saved scenarios found!', 'warning');
-                return;
-            }
-
-            try {
-                const { scenarios } = JSON.parse(savedData);
-                const scenarioCount = scenarios.length;
-                const scenarioText = scenarioCount === 1 ? 'scenario' : 'scenarios';
-
-                // Remove the saved scenarios from localStorage
-                localStorage.removeItem('pdScenarios');
-
-                showToast(`Successfully removed ${scenarioCount} saved ${scenarioText}!`, 'success');
-            } catch (error) {
-                console.error('Error removing saved scenarios:', error);
-                showToast('Error removing saved scenarios!', 'error');
-            }
         }
 
         function removeScenario(scenarioId) {
@@ -874,10 +1520,6 @@
                 scenario.querySelector('.scenario-number').textContent = number;
 
                 const scenarioId = scenario.id;
-                const type = document.getElementById(`${scenarioId}-type`).value;
-                const template = scenarioTemplates[type];
-                updateCustomDetails(scenarioId, template.customDetails);
-
                 const toggleButton = scenario.querySelector('.toggle-custom-details');
                 const customDetailsContainer = document.getElementById(`${scenarioId}-custom-details`);
                 const isHidden = customDetailsContainer.style.display === 'none';
@@ -908,13 +1550,12 @@
 
             container.innerHTML = `<h3>Custom Details for Scenario ${scenarioNumber}</h3>`;
 
-            // Add template fields with the same pattern as component/group/source fields
             Object.entries(customDetails).forEach(([key, value]) => {
                 const fieldContainerId = `${scenarioId}-${key.toLowerCase().replace(/\s+/g, '-')}-field`;
                 const fieldHtml = `
                     <div class="custom-field" id="${fieldContainerId}">
-                        <label>${key}:</label>
-                        <input type="text" value="${value}">
+                        <label>${escapeHtml(key)}:</label>
+                        <input type="text" value="${escapeHtml(value)}">
                         <button class="remove-field" onclick="removeField('${fieldContainerId}')">x</button>
                     </div>
                 `;
@@ -999,12 +1640,14 @@
             };
 
             document.querySelectorAll(`#${scenarioId} .field`).forEach(field => {
-                const label = field.querySelector('label');
-                const input = field.querySelector('input:last-of-type, select');
-                if (label && input) {
-                    const key = label.textContent.replace(':', '').trim().toLowerCase();
-                    if (!['summary', 'severity', 'source'].includes(key)) {
-                        data[key] = input.value;
+                if (field.style.display !== 'none') {
+                    const label = field.querySelector('label');
+                    const input = field.querySelector('input:last-of-type, select');
+                    if (label && input) {
+                        const key = label.textContent.replace(':', '').trim().toLowerCase();
+                        if (!['summary', 'severity', 'source'].includes(key)) {
+                            data[key] = input.value;
+                        }
                     }
                 }
             });
@@ -1023,6 +1666,7 @@
 
             return data;
         }
+
         function removeField(fieldId) {
             document.getElementById(fieldId).remove();
             updatePayload();
@@ -1051,8 +1695,7 @@
         function sendEvents() {
             hidePayload();
 
-            // Use realRoutingKey instead of input field value
-            if (!realRoutingKey) {
+            if (!currentRoutingKey) {
                 showToast('Routing Key is mandatory.<br>This Key is your Event Orchestration or Service Integration Key.', 'error', 5000);
                 return;
             }
@@ -1061,8 +1704,6 @@
             const dedupKey = document.getElementById('dedup_key').value.trim();
             const dedupKeyForTrigger = document.getElementById('dedup_key_for_trigger').checked;
             const scenarios = document.querySelectorAll('.scenario');
-
-            let errors = [];
 
             if ((eventAction === 'acknowledge' || eventAction === 'resolve') && !dedupKey) {
                 showToast('Dedup Key is mandatory for acknowledge and resolve actions.', 'error', 5000);
@@ -1106,6 +1747,10 @@
             Promise.all(events)
                 .then(results => {
                     displaySuccessResults(results, eventAction);
+                    // Update routing key usage if it's a saved key
+                    if (currentRoutingKeyId) {
+                        storage.updateRoutingKeyUsage(currentRoutingKeyId);
+                    }
                 })
                 .catch(error => {
                     displayError(error.message);
@@ -1113,210 +1758,245 @@
         }
 
         function displayError(errorMessage) {
-            let friendlyMessage = errorMessage;
+                    let friendlyMessage = errorMessage;
 
-            if (errorMessage.includes('Invalid routing key')) {
-                showToast(`The routing key doesn't seem to be correct.<br>Double-check it and give it another try!`, 'error', 5000);
-            } else if (errorMessage.includes('API error:')) {
-                try {
-                    const apiError = JSON.parse(errorMessage.replace('API error:', ''));
-                    if (apiError.errors && apiError.errors.length > 0) {
-                        friendlyMessage = `Oops! Something went wrong: ${apiError.errors[0]}`;
-                    } else if (apiError.message) {
-                        friendlyMessage = `Oops! Something went wrong: ${apiError.message}`;
+                    if (errorMessage.includes('Invalid routing key')) {
+                        friendlyMessage = 'Invalid routing key. Please check your routing key and try again.';
+                    } else if (errorMessage.includes('Network')) {
+                        friendlyMessage = 'Network error. Please check your internet connection and try again.';
+                    } else if (errorMessage.includes('API error')) {
+                        friendlyMessage = errorMessage;
                     }
-                } catch (e) {
-                    showToast('Oops! Something went wrong when sending the event.<br>Please check your inputs and try again.', 'error', 5000);
+
+                    document.getElementById('error-container').innerHTML = `
+                        <div class="error-message">
+                            <strong>Error:</strong> ${friendlyMessage}
+                        </div>
+                    `;
+                    showToast('Failed to send events. Check error details above.', 'error');
                 }
-            }
 
-            const errorContainer = document.getElementById('error-container');
-            errorContainer.innerHTML = `
-                <div class="error-message">
-                    <h3>Error Sending Events</h3>
-                    <p>${friendlyMessage}</p>
-                </div>
-            `;
-            document.getElementById('result').innerHTML = '';
-        }
+                function displaySuccessResults(results, eventAction) {
+                    const actionText = eventAction === 'trigger' ? 'triggered' : eventAction + 'd';
+                    const resultHtml = `
+                        <h3>Success! Events ${actionText} 🎉</h3>
+                        <ul>
+                            ${results.map((result, index) => `
+                                <li>
+                                    <strong>Scenario ${index + 1}:</strong> ${escapeHtml(result.scenarioData.summary)}
+                                    <br><small>Dedup Key: ${result.response.dedup_key || 'Auto-generated'}</small>
+                                </li>
+                            `).join('')}
+                        </ul>
+                    `;
+                    document.getElementById('result').innerHTML = resultHtml;
+                    showToast(`Successfully ${actionText} ${results.length} event${results.length > 1 ? 's' : ''}!`, 'success');
+                }
 
-        function displaySuccessResults(results, eventAction) {
-            document.getElementById('error-container').innerHTML = '';
-            let resultHtml = `<h3>Events Sent Successfully</h3>
-                              <p><strong>Event Action:</strong> ${eventAction}</p>`;
-            results.forEach((result, index) => {
-                resultHtml += `
-                    <div class="event-result">
-                        <h4>Scenario ${index + 1}</h4>
-                        <p><strong>Summary:</strong> ${result.scenarioData.summary}</p>
-                        <p><strong>Dedup Key:</strong> ${result.response.dedup_key}</p>
-                        <p><strong>Status:</strong> ${result.response.status}</p>
-                    </div>
-                `;
-            });
-            document.getElementById('result').innerHTML = resultHtml;
-        }
+                function generateEventPayload(scenarioData) {
+                    const eventAction = document.getElementById('event_action').value;
+                    const dedupKey = document.getElementById('dedup_key').value.trim();
+                    const dedupKeyForTrigger = document.getElementById('dedup_key_for_trigger').checked;
+                    const client = document.getElementById('client').value;
 
-        function showPayload() {
-            if (!realRoutingKey) {
-                displayError("Routing Key is required to show the payload.");
-                return;
-            }
+                    const payload = {
+                        routing_key: currentRoutingKey,
+                        event_action: eventAction,
+                        client: client
+                    };
 
-            const payloads = generatePayloads();
+                    if (eventAction === 'trigger') {
+                        payload.payload = {
+                            summary: scenarioData.summary,
+                            severity: scenarioData.severity,
+                            source: scenarioData.source
+                        };
 
-            // Create a deep copy of payloads for display purposes
-            const displayPayloads = JSON.parse(JSON.stringify(payloads));
+                        // Add optional fields
+                        ['component', 'group', 'class'].forEach(field => {
+                            if (scenarioData[field]) {
+                                payload.payload[field] = scenarioData[field];
+                            }
+                        });
 
-            // Mask the routing key in the display version
-            displayPayloads.forEach(payload => {
-                payload.routing_key = maskRoutingKey(payload.routing_key);
-            });
+                        // Add custom details
+                        if (Object.keys(scenarioData.custom_details).length > 0) {
+                            payload.payload.custom_details = scenarioData.custom_details;
+                        }
 
-            const formattedPayload = JSON.stringify(displayPayloads, null, 2);
-            const payloadPreviewElement = document.getElementById('payload-preview');
-
-            payloadPreviewElement.style.display = 'block';
-            payloadPreviewElement.querySelector('.payload-preview').textContent = formattedPayload;
-            document.getElementById('showPayloadBtn').style.display = 'none';
-            document.getElementById('hidePayloadBtn').style.display = 'inline-block';
-            document.getElementById('error-container').innerHTML = '';
-        }
-
-        function hidePayload() {
-            document.getElementById('payload-preview').style.display = 'none';
-            document.getElementById('showPayloadBtn').style.display = 'inline-block';
-            document.getElementById('hidePayloadBtn').style.display = 'none';
-            document.getElementById('error-container').innerHTML = '';
-        }
-
-        function generatePayloads() {
-            return Array.from(document.querySelectorAll('.scenario')).map(scenario => {
-                const scenarioData = getScenarioData(scenario.id);
-                const payload = generateEventPayload(scenarioData);
-                // Ensure we're using the real routing key
-                payload.routing_key = realRoutingKey;
-                return payload;
-            });
-        }
-
-        function generateEventPayload(scenarioData) {
-            const eventAction = document.getElementById('event_action').value;
-            const client = document.getElementById('client').value;
-            const dedupKey = document.getElementById('dedup_key').value.trim();
-            const dedupKeyForTrigger = document.getElementById('dedup_key_for_trigger').checked;
-
-            // Create payload with the real routing key, not the masked one
-            const payload = {
-                routing_key: realRoutingKey, // Always use realRoutingKey, not the masked value
-                event_action: eventAction,
-                client: client,
-                client_url: "https://jplassnibatt.github.io/pd_events/scenarios.html",
-                payload: scenarioData
-            };
-
-            if (eventAction === 'acknowledge' || eventAction === 'resolve' || (eventAction === 'trigger' && dedupKeyForTrigger)) {
-                payload.dedup_key = dedupKey;
-            }
-
-            return payload;
-        }
-
-        function downloadShellScript() {
-            const payloads = generatePayloads();
-            let scriptContent = '#!/bin/bash\n\n';
-            payloads.forEach((payload, index) => {
-                // Ensure we're using the real routing key
-                payload.routing_key = realRoutingKey;
-                const curlCommand = `curl -X POST https://events.pagerduty.com/v2/enqueue \\
-                 -H 'Content-Type: application/json' \\
-                 -d '${JSON.stringify(payload)}'\n\n`;
-                scriptContent += `echo "Sending event ${index + 1}..."\n${curlCommand}echo "Event ${index + 1} sent."\n\n`;
-            });
-
-            const blob = new Blob([scriptContent], { type: 'text/plain' });
-            const url = URL.createObjectURL(blob);
-
-            const now = new Date();
-            const year = now.getFullYear();
-            const month = String(now.getMonth() + 1).padStart(2, '0');
-            const day = String(now.getDate()).padStart(2, '0');
-            const hours = String(now.getHours()).padStart(2, '0');
-            const minutes = String(now.getMinutes()).padStart(2, '0');
-            const seconds = String(now.getSeconds()).padStart(2, '0');
-            const filename = `send_pd_events-${year}${month}${day}-${hours}${minutes}${seconds}.sh`;
-
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = filename;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
-        }
-
-        function addChangeListeners() {
-            addListenersToElement(document);
-        }
-
-        function updatePayload() {
-            const payloadPreviewElement = document.getElementById('payload-preview');
-            if (payloadPreviewElement.style.display === 'block') {
-                showPayload();
-            }
-        }
-
-        addScenario();
-        document.addEventListener('DOMContentLoaded', () => {
-            addChangeListeners();
-            toggleDedupKeyField();
-
-            // Initialize routing key masking
-            const routingKeyInput = document.getElementById('routing_key');
-            if (routingKeyInput.value && !routingKeyInput.value.includes('•')) {
-                realRoutingKey = routingKeyInput.value; // Store complete initial key
-                routingKeyInput.value = maskRoutingKey(routingKeyInput.value);
-            }
-        });
-
-        function showToast(message, type = 'info', duration = 3000) {
-        const container = document.getElementById('toastContainer');
-        const toast = document.createElement('div');
-        const id = 'toast-' + Date.now();
-
-        toast.id = id;
-        toast.className = `toast ${type}`;
-        toast.innerHTML = `
-            ${message}
-            <button class="close-toast" onclick="closeToast('${id}')">&times;</button>
-        `;
-
-        container.appendChild(toast);
-
-        // Auto-remove after duration
-        setTimeout(() => closeToast(id), duration);
-
-        // Handle click anywhere on toast to dismiss
-        toast.addEventListener('click', () => closeToast(id));
-        }
-
-        function closeToast(id) {
-            const toast = document.getElementById(id);
-            if (toast) {
-                toast.classList.add('hiding');
-                setTimeout(() => {
-                    if (toast.parentElement) {
-                        toast.parentElement.removeChild(toast);
+                        // Add dedup key if specified
+                        if (dedupKeyForTrigger && dedupKey) {
+                            payload.dedup_key = dedupKey;
+                        }
+                    } else {
+                        // For acknowledge/resolve actions
+                        payload.dedup_key = dedupKey;
                     }
-                }, 300); // Match the animation duration
-            }
-        }
 
-        function checkRealKey() {
-            console.log('Current real routing key:', realRoutingKey);
-        }
+                    return payload;
+                }
 
-    </script>
-    <div class="toast-container" id="toastContainer"></div>
-</body>
-</html>
+                function showPayload() {
+                    if (!currentRoutingKey) {
+                        showToast('Please enter a routing key first.', 'warning');
+                        return;
+                    }
+
+                    const scenarios = document.querySelectorAll('.scenario');
+                    if (scenarios.length === 0) {
+                        showToast('Please add at least one scenario.', 'warning');
+                        return;
+                    }
+
+                    try {
+                        const payloads = Array.from(scenarios).map(scenario => {
+                            const scenarioData = getScenarioData(scenario.id);
+                            return generateEventPayload(scenarioData);
+                        });
+
+                        const payloadPreview = document.getElementById('payload-preview');
+                        const preElement = payloadPreview.querySelector('.payload-preview');
+
+                        preElement.textContent = payloads.map(payload =>
+                            JSON.stringify(payload, null, 2)
+                        ).join('\n\n---\n\n');
+
+                        payloadPreview.style.display = 'block';
+                        document.getElementById('showPayloadBtn').style.display = 'none';
+                        document.getElementById('hidePayloadBtn').style.display = 'inline-block';
+                    } catch (error) {
+                        showToast(`Error generating payload: ${error.message}`, 'error');
+                    }
+                }
+
+                function hidePayload() {
+                    document.getElementById('payload-preview').style.display = 'none';
+                    document.getElementById('showPayloadBtn').style.display = 'inline-block';
+                    document.getElementById('hidePayloadBtn').style.display = 'none';
+                }
+
+                function updatePayload() {
+                    const payloadPreview = document.getElementById('payload-preview');
+                    if (payloadPreview.style.display === 'block') {
+                        showPayload();
+                    }
+                }
+
+                function downloadShellScript() {
+                    if (!currentRoutingKey) {
+                        showToast('Please enter a routing key first.', 'warning');
+                        return;
+                    }
+
+                    const scenarios = document.querySelectorAll('.scenario');
+                    if (scenarios.length === 0) {
+                        showToast('Please add at least one scenario.', 'warning');
+                        return;
+                    }
+
+                    try {
+                        const payloads = Array.from(scenarios).map(scenario => {
+                            const scenarioData = getScenarioData(scenario.id);
+                            return generateEventPayload(scenarioData);
+                        });
+
+                        let script = '#!/bin/bash\n\n';
+                        script += '# KrakenDuty - PagerDuty Event Sender Script\n';
+                        script += '# Generated on: ' + new Date().toISOString() + '\n\n';
+                        script += 'echo "🦑 KrakenDuty - Sending PagerDuty Events..."\n\n';
+
+                        payloads.forEach((payload, index) => {
+                            script += `echo "Sending event ${index + 1}/${payloads.length}..."\n`;
+                            script += `curl -X POST https://events.pagerduty.com/v2/enqueue \\\n`;
+                            script += `  -H "Content-Type: application/json" \\\n`;
+                            script += `  -d '${JSON.stringify(payload)}'\n\n`;
+                        });
+
+                        script += 'echo "✅ All events sent!"\n';
+
+                        const blob = new Blob([script], { type: 'text/plain' });
+                        const url = URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.href = url;
+                        a.download = 'krakenduty-events.sh';
+                        document.body.appendChild(a);
+                        a.click();
+                        document.body.removeChild(a);
+                        URL.revokeObjectURL(url);
+
+                        showToast('Shell script downloaded successfully!', 'success');
+                    } catch (error) {
+                        showToast(`Error generating script: ${error.message}`, 'error');
+                    }
+                }
+
+                /**
+                 * Toast notification system
+                 */
+                function showToast(message, type = 'info', duration = 3000) {
+                    const container = getOrCreateToastContainer();
+
+                    const toast = document.createElement('div');
+                    toast.className = `toast ${type}`;
+                    toast.innerHTML = `
+                        <span>${message}</span>
+                        <button class="close-toast" onclick="closeToast(this)">&times;</button>
+                    `;
+
+                    container.appendChild(toast);
+
+                    // Auto-remove after duration
+                    setTimeout(() => {
+                        if (toast.parentNode) {
+                            closeToast(toast.querySelector('.close-toast'));
+                        }
+                    }, duration);
+                }
+
+                function getOrCreateToastContainer() {
+                    let container = document.querySelector('.toast-container');
+                    if (!container) {
+                        container = document.createElement('div');
+                        container.className = 'toast-container';
+                        document.body.appendChild(container);
+                    }
+                    return container;
+                }
+
+                function closeToast(button) {
+                    const toast = button.parentNode;
+                    toast.classList.add('hiding');
+                    setTimeout(() => {
+                        if (toast.parentNode) {
+                            toast.parentNode.removeChild(toast);
+                        }
+                    }, 300);
+                }
+
+                /**
+                 * Initialize the application
+                 */
+                document.addEventListener('DOMContentLoaded', function() {
+                    // Initialize routing key field
+                    const routingKeyField = document.getElementById('routing_key');
+                    addListenersToElement(document.body);
+
+                    // Add initial scenario
+                    addScenario();
+
+                    // Initialize dedup key field visibility
+                    toggleDedupKeyField();
+
+                    // Show welcome message
+                    // showToast('Welcome to KrakenDuty! 🦑 Enhanced with persistent storage.', 'info', 4000);
+                });
+
+                // Prevent form submission on Enter key
+                document.addEventListener('keydown', function(e) {
+                    if (e.key === 'Enter' && e.target.tagName !== 'BUTTON') {
+                        e.preventDefault();
+                    }
+                });
+            </script>
+        </body>
+        </html>
