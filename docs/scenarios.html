@@ -535,7 +535,7 @@
 <body>
     <header class="title-group">
         <h1 class="main-title">KrakenDuty</h1>
-        <h1 class="sub-title">PagerDuty Event V2 Sender <span class="version">v1.3 (unofficial)</span></h1>
+        <h1 class="sub-title">PagerDuty Event V2 Sender <span class="version">v1.4 (unofficial)</span></h1>
         <h2>Multiple Scenarios at once - Script Generator</h2>
     </header>
 
@@ -823,13 +823,13 @@
 
         // Scenario templates remain the same
         const scenarioTemplates = {
-            application: {summary:"Application unresponsive - multiple user reports",severity:"error",source:"app-server-02.us-east-4.com",component:"E-commerce Application",group:"Application Stack",class:"Availability",customDetails:{error_rate:"15%",response_time:"10s",affected_users:"500+"}},
-            container:{summary:"Container orchestration system failure - multiple pods crashing",severity:"critical",source:"k8s-cluster-01.us-east-1.com",component:"Kubernetes Cluster",group:"Container Platform",class:"Availability",customDetails:{failed_pods:"12",memory_usage:"93%",restart_count:"25"}},
-            cpu: {summary:"Excessive CPU usage detected on production web server",severity:"critical",source:"web-server-05.us-east-2.com",component:"Apache Web Server",group:"Web Infrastructure",class:"Performance",customDetails:{cpu_usage:"95%",process_count:"250",load_average:"8.5"}},
-            database: {summary:"High latency and connection timeouts in primary database cluster",severity:"critical",source:"db-cluster-01.us-east-1.com",component:"PostgreSQL",group:"Database Infrastructure",class:"Performance Degradation",customDetails:{db_name:"primary_cluster",connection_count:"500",avg_query_time:"2.5s"}},
-            disk: {summary:"Critical disk space shortage on file server",severity:"critical",source:"file-server-03.us-east-3.com",component:"Storage System",group:"Storage Infrastructure",class:"Capacity",customDetails:{disk_usage:"98%",free_space:"20GB",affected_partition:"/dev/sda1"}},
-            login: {summary:"Multiple failed login attempts detected",severity:"error",source:"auth-server-01.us-west-1.com",component:"Authentication Service",group:"Login",class:"Security Threat",customDetails:{failed_attempts:"100+",affected_accounts:"25",source_ip:"192.168.1.100"}},
-            network: {summary:"Network connectivity issues affecting multiple services",severity:"critical",source:"core-switch-01.us-west-2.com",component:"Core Network Infrastructure",group:"Network",class:"Connectivity",customDetails:{packet_loss:"25%",affected_vlans:"VLAN 10, VLAN 20",bandwidth_utilization:"90%"}}
+            example01: {summary:"Application unresponsive - multiple user reports",severity:"error",source:"app-server-02.us-east-4.com",component:"E-commerce Application",group:"Application Stack",class:"Availability",customDetails:{error_rate:"15%",response_time:"10s",affected_users:"500+"}},
+            example02:{summary:"Container orchestration system failure - multiple pods crashing",severity:"critical",source:"k8s-cluster-01.us-east-1.com",component:"Kubernetes Cluster",group:"Container Platform",class:"Availability",customDetails:{failed_pods:"12",memory_usage:"93%",restart_count:"25"}},
+            example03: {summary:"Excessive CPU usage detected on production web server",severity:"critical",source:"web-server-05.us-east-2.com",component:"Apache Web Server",group:"Web Infrastructure",class:"Performance",customDetails:{cpu_usage:"95%",process_count:"250",load_average:"8.5"}},
+            example04: {summary:"High latency and connection timeouts in primary database cluster",severity:"critical",source:"db-cluster-01.us-east-1.com",component:"PostgreSQL",group:"Database Infrastructure",class:"Performance Degradation",customDetails:{db_name:"primary_cluster",connection_count:"500",avg_query_time:"2.5s"}},
+            example05: {summary:"Critical disk space shortage on file server",severity:"critical",source:"file-server-03.us-east-3.com",component:"Storage System",group:"Storage Infrastructure",class:"Capacity",customDetails:{disk_usage:"98%",free_space:"20GB",affected_partition:"/dev/sda1"}},
+            example06: {summary:"Multiple failed login attempts detected",severity:"error",source:"auth-server-01.us-west-1.com",component:"Authentication Service",group:"Login",class:"Security Threat",customDetails:{failed_attempts:"100+",affected_accounts:"25",source_ip:"192.168.1.100"}},
+            example07: {summary:"Network connectivity issues affecting multiple services",severity:"critical",source:"core-switch-01.us-west-2.com",component:"Core Network Infrastructure",group:"Network",class:"Connectivity",customDetails:{packet_loss:"25%",affected_vlans:"VLAN 10, VLAN 20",bandwidth_utilization:"90%"}}
         };
 
         let currentRoutingKey = '';
@@ -1458,13 +1458,13 @@
                         <span class="scenario-title">Scenario <span class="scenario-number">${scenarioCount}</span>:</span>
                         <div class="scenario-type-container">
                             <select id="${scenarioId}-type" class="scenario-type bold-select" onchange="updateScenarioFields('${scenarioId}')">
-                                <option value="application">Application Issues</option>
-                                <option value="container">Container Issues</option>
-                                <option value="cpu">CPU Issues</option>
-                                <option value="database">Database Issues</option>
-                                <option value="disk">Disk Issues</option>
-                                <option value="login">Login Issues</option>
-                                <option value="network">Network Issues</option>
+                                <option value="example01">Example 01</option>
+                                <option value="example02">Example 02</option>
+                                <option value="example03">Example 03</option>
+                                <option value="example04">Example 04</option>
+                                <option value="example05">Example 05</option>
+                                <option value="example06">Example 06</option>
+                                <option value="example07">Example 07</option>
                             </select>
                             <button class="remove-scenario" onclick="removeScenario('${scenarioId}')">Remove</button>
                         </div>
