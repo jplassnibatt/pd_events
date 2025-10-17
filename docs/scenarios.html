@@ -529,13 +529,18 @@
     .validation-success {
         color: #28a745;
     }
+    #scenario-display {
+        color: #333333 !important;
+        font-weight: bold !important;
+        font-size: 0.85em !important;
+    }
 
 </style>
 </head>
 <body>
     <header class="title-group">
         <h1 class="main-title">KrakenDuty</h1>
-        <h1 class="sub-title">PagerDuty Event V2 Sender <span class="version">v1.4 (unofficial)</span></h1>
+        <h1 class="sub-title">PagerDuty Event V2 Sender <span class="version">v1.5 (unofficial)</span></h1>
         <h2>Multiple Scenarios at once - Script Generator</h2>
     </header>
 
@@ -574,7 +579,10 @@
     </div>
 
     <div class="section">
-        <h2>Scenarios <span class="subtext">Go nuts!</span></h2>
+        <h2>
+            Scenarios <span class="subtext">Go nuts!</span>
+            <span id="scenario-display" style="display: none; margin-left: 15px; font-size: 0.7em; color: #666; font-weight: normal;"></span>
+        </h2>
         <div id="scenarios-container"></div>
         <div class="scenario-actions">
             <button class="save-all-scenarios" onclick="addScenario()">Add Scenario</button>
@@ -1163,6 +1171,16 @@
             }
         }
 
+        function updateScenarioDisplay(text = '') {
+            const displayElement = document.getElementById('scenario-display');
+            if (text) {
+                displayElement.textContent = text;
+                displayElement.style.display = 'inline';
+            } else {
+                displayElement.style.display = 'none';
+            }
+        }
+
         function loadScenarioSet(id) {
             const setData = storage.getScenarioSet(id);
             if (!setData) {
@@ -1192,6 +1210,10 @@
                 });
 
                 storage.updateScenarioSetUsage(id);
+                
+                // Update the scenario display - CHANGED THIS LINE
+                updateScenarioDisplay(`Loaded scenario: "${setData.name}"`);
+                
                 showToast(`Loaded scenario set: ${setData.name}`, 'success');
                 updatePayload();
             } catch (error) {
@@ -1416,6 +1438,7 @@
             const scenarioText = scenarioCount === 1 ? 'scenario' : 'scenarios';
 
             document.getElementById('scenarios-container').innerHTML = '';
+            updateScenarioDisplay(''); // Clear the display
             showToast(`Cleared ${scenarioCount} ${scenarioText} from view!<br>Adding a fresh scenario.`, 'success');
 
             addScenario();
@@ -1448,6 +1471,10 @@
 
             updateScenarioFields(scenarioId);
             addListenersToElement(document.getElementById(scenarioId));
+            
+            // DON'T update display when adding template scenarios
+            // The display should only show when a saved scenario set is loaded
+            
             updatePayload();
         }
 
@@ -1513,6 +1540,10 @@
         function removeScenario(scenarioId) {
             document.getElementById(scenarioId).remove();
             updateScenarioNumbers();
+            
+            // Clear the display when manually removing scenarios
+            updateScenarioDisplay('');
+            
             updatePayload();
         }
 
