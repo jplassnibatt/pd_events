@@ -897,43 +897,41 @@ function toggleDedupKeyField() {
     updatePayload();
 }
 
-function sendEvents() {
+async function sendEvents(button) {
+    console.log("Main action started by sendEvents...");
     hidePayload();
 
-    if (!currentRoutingKey) {
-        showToast('Routing Key is mandatory.<br>This Key is your Event Orchestration or Service Integration Key.', 'error', 5000);
-        return;
-    }
+    // Disable the button to prevent multiple clicks
+    if(button) button.disabled = true;
 
-    const eventAction = document.getElementById('event_action').value;
-    const dedupKey = document.getElementById('dedup_key').value.trim();
-    const dedupKeyForTrigger = document.getElementById('dedup_key_for_trigger').checked;
-    const scenarios = document.querySelectorAll('.scenario');
+    try {
+        // --- STEP 1: All original validation checks ---
+        if (!currentRoutingKey) {
+            throw new Error('Routing Key is mandatory.<br>This Key is your Event Orchestration or Service Integration Key.');
+        }
 
-    if ((eventAction === 'acknowledge' || eventAction === 'resolve') && !dedupKey) {
-        showToast('Dedup Key is mandatory for acknowledge and resolve actions.', 'error', 5000);
-        return;
-    }
+        const eventAction = document.getElementById('event_action').value;
+        const dedupKey = document.getElementById('dedup_key').value.trim();
+        const dedupKeyForTrigger = document.getElementById('dedup_key_for_trigger').checked;
+        const scenarios = document.querySelectorAll('.scenario');
 
-    if (eventAction === 'trigger' && dedupKeyForTrigger && !dedupKey) {
-        showToast('Please add a Dedup Key or unmark the checkbox.', 'error', 5000);
-        return;
-    }
+        if ((eventAction === 'acknowledge' || eventAction === 'resolve') && !dedupKey) {
+            throw new Error('Dedup Key is mandatory for acknowledge and resolve actions.');
+        }
 
-    if (scenarios.length === 0) {
-        showToast('At least one scenario is required.', 'error', 5000);
-        return;
-    }
+        if (eventAction === 'trigger' && dedupKeyForTrigger && !dedupKey) {
+            throw new Error('Please add a Dedup Key or unmark the checkbox.');
+        }
 
-    // *** ADD THIS LINE HERE ***
-    incrementKrakenCount();  // Increment the counter
-    // *** END OF NEW CODE *** 
-
-    document.getElementById('error-container').innerHTML = '';
-    document.getElementById('result').innerHTML = '';
-
-    const events = Array.from(scenarios).map(scenario => {
-        try {
+        if (scenarios.length === 0) {
+            throw new Error('At least one scenario is required.');
+        }
+        
+        document.getElementById('error-container').innerHTML = '';
+        document.getElementById('result').innerHTML = '';
+        
+        // --- STEP 2: The primary action (sending events to PagerDuty) ---
+        const eventPromises = Array.from(scenarios).map(scenario => {
             const scenarioData = getScenarioData(scenario.id);
             const payload = generateEventPayload(scenarioData);
             return fetch('https://events.pagerduty.com/v2/enqueue', {
@@ -943,27 +941,37 @@ function sendEvents() {
             }).then(response => {
                 if (!response.ok) {
                     return response.text().then(text => {
+                        // This 'throw' will be caught by the outer try/catch block
                         throw new Error(`API error: ${text}`);
                     });
                 }
                 return response.json();
             }).then(data => ({ scenarioData, response: data }));
-        } catch (error) {
-            return Promise.reject(error);
-        }
-    });
-
-    Promise.all(events)
-        .then(results => {
-            displaySuccessResults(results, eventAction);
-            // Update routing key usage if it's a saved key
-            if (currentRoutingKeyId) {
-                storage.updateRoutingKeyUsage(currentRoutingKeyId);
-            }
-        })
-        .catch(error => {
-            displayError(error.message);
         });
+
+        // Promise.all will wait for ALL fetch requests to complete. If any ONE fails, it will reject.
+        const results = await Promise.all(eventPromises);
+
+        // --- If we reach here, ALL events were sent successfully ---
+        displaySuccessResults(results, eventAction);
+        
+        if (currentRoutingKeyId) {
+            storage.updateRoutingKeyUsage(currentRoutingKeyId);
+        }
+
+        // --- STEP 3: Increment the Firebase counter (ONLY ON SUCCESS) ---
+        console.log("PagerDuty events sent successfully. Incrementing Firebase counter...");
+        await window.incrementKrakenCount();
+
+    } catch (error) {
+        // --- If any part of the try block fails, we land here ---
+        console.error("sendEvents failed:", error.message);
+        displayError(error.message); // Your existing error display function
+    } finally {
+        // --- This runs no matter what, to re-enable the button ---
+        if(button) button.disabled = false;
+        console.log("sendEvents process complete.");
+    }
 }
 
 function displayError(errorMessage) {
