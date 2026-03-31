@@ -5,11 +5,11 @@ const storage = new KrakenDutyStorage();
 const scenarioTemplates = {
     example01: { summary: "Application unresponsive - multiple user reports", severity: "error", source: "app-server-02.us-east-4.com", component: "E-commerce Application", group: "Application Stack", class: "Availability", customDetails: { error_rate: "15%", response_time: "10s", affected_users: "500+" } },
     example02: { summary: "Container orchestration system failure - multiple pods crashing", severity: "critical", source: "k8s-cluster-01.us-east-1.com", component: "Kubernetes Cluster", group: "Container Platform", class: "Availability", customDetails: { failed_pods: "12", memory_usage: "93%", restart_count: "25" } },
-    example03: { summary: "Excessive CPU usage detected on production web server", severity: "critical", source: "web-server-05.us-east-2.com", component: "Apache Web Server", group: "Web Infrastructure", class: "Performance", customDetails: { cpu_usage: "95%", process_count: "250", load_average: "8.5" } },
-    example04: { summary: "High latency and connection timeouts in primary database cluster", severity: "critical", source: "db-cluster-01.us-east-1.com", component: "PostgreSQL", group: "Database Infrastructure", class: "Performance Degradation", customDetails: { db_name: "primary_cluster", connection_count: "500", avg_query_time: "2.5s" } },
-    example05: { summary: "Critical disk space shortage on file server", severity: "critical", source: "file-server-03.us-east-3.com", component: "Storage System", group: "Storage Infrastructure", class: "Capacity", customDetails: { disk_usage: "98%", free_space: "20GB", affected_partition: "/dev/sda1" } },
-    example06: { summary: "Multiple failed login attempts detected", severity: "error", source: "auth-server-01.us-west-1.com", component: "Authentication Service", group: "Login", class: "Security Threat", customDetails: { failed_attempts: "100+", affected_accounts: "25", source_ip: "192.168.1.100" } },
-    example07: { summary: "Network connectivity issues affecting multiple services", severity: "critical", source: "core-switch-01.us-west-2.com", component: "Core Network Infrastructure", group: "Network", class: "Connectivity", customDetails: { packet_loss: "25%", affected_vlans: "VLAN 10, VLAN 20", bandwidth_utilization: "90%" } }
+    example03: { summary: "High latency and connection timeouts in primary database cluster", severity: "critical", source: "db-cluster-01.us-east-1.com", component: "PostgreSQL", group: "Database Infrastructure", class: "Performance Degradation", customDetails: { db_name: "primary_cluster", connection_count: "500", avg_query_time: "2.5s" } },
+    example04: { summary: "Multiple failed login attempts detected", severity: "error", source: "auth-server-01.us-west-1.com", component: "Authentication Service", group: "Login", class: "Security Threat", customDetails: { failed_attempts: "100+", affected_accounts: "25", source_ip: "192.168.1.100" } },
+    example05: { summary: "Network connectivity issues affecting multiple services", severity: "critical", source: "core-switch-01.us-west-2.com", component: "Core Network Infrastructure", group: "Network", class: "Connectivity", customDetails: { packet_loss: "25%", affected_vlans: "VLAN 10, VLAN 20", bandwidth_utilization: "90%" } },
+    example06: { summary: "Excessive CPU usage detected on production web server", severity: "critical", source: "web-server-05.us-east-2.com", component: "Apache Web Server", group: "Web Infrastructure", class: "Performance", customDetails: { cpu_usage: "95%", process_count: "250", load_average: "8.5" } },
+    example07: { summary: "Critical disk space shortage on file server", severity: "critical", source: "file-server-03.us-east-3.com", component: "Storage System", group: "Storage Infrastructure", class: "Capacity", customDetails: { disk_usage: "98%", free_space: "20GB", affected_partition: "/dev/sda1" } }
 };
 
 let currentRoutingKey = '';
@@ -902,7 +902,7 @@ async function sendEvents(button) {
     hidePayload();
 
     // Disable the button to prevent multiple clicks
-    if(button) button.disabled = true;
+    if (button) button.disabled = true;
 
     try {
         // --- STEP 1: All original validation checks ---
@@ -926,10 +926,10 @@ async function sendEvents(button) {
         if (scenarios.length === 0) {
             throw new Error('At least one scenario is required.');
         }
-        
+
         document.getElementById('error-container').innerHTML = '';
         document.getElementById('result').innerHTML = '';
-        
+
         // --- STEP 2: The primary action (sending events to PagerDuty) ---
         const eventPromises = Array.from(scenarios).map(scenario => {
             const scenarioData = getScenarioData(scenario.id);
@@ -954,7 +954,7 @@ async function sendEvents(button) {
 
         // --- If we reach here, ALL events were sent successfully ---
         displaySuccessResults(results, eventAction);
-        
+
         if (currentRoutingKeyId) {
             storage.updateRoutingKeyUsage(currentRoutingKeyId);
         }
@@ -969,7 +969,7 @@ async function sendEvents(button) {
         displayError(error.message); // Your existing error display function
     } finally {
         // --- This runs no matter what, to re-enable the button ---
-        if(button) button.disabled = false;
+        if (button) button.disabled = false;
         console.log("sendEvents process complete.");
     }
 }
@@ -1016,37 +1016,38 @@ function generateEventPayload(scenarioData) {
     const dedupKeyForTrigger = document.getElementById('dedup_key_for_trigger').checked;
     const client = document.getElementById('client').value;
 
+    // 1. Build the base payload and the payload data regardless of the action type
     const payload = {
         routing_key: currentRoutingKey,
         event_action: eventAction,
-        client: client
-    };
-
-    if (eventAction === 'trigger') {
-        payload.payload = {
+        client: client,
+        payload: {
             summary: scenarioData.summary,
             severity: scenarioData.severity,
             source: scenarioData.source
-        };
-
-        // Add optional fields
-        ['component', 'group', 'class'].forEach(field => {
-            if (scenarioData[field]) {
-                payload.payload[field] = scenarioData[field];
-            }
-        });
-
-        // Add custom details
-        if (Object.keys(scenarioData.custom_details).length > 0) {
-            payload.payload.custom_details = scenarioData.custom_details;
         }
+    };
 
-        // Add dedup key if specified
+    // 2. Add optional fields
+    ['component', 'group', 'class'].forEach(field => {
+        if (scenarioData[field]) {
+            payload.payload[field] = scenarioData[field];
+        }
+    });
+
+    // 3. Add custom details
+    if (Object.keys(scenarioData.custom_details).length > 0) {
+        payload.payload.custom_details = scenarioData.custom_details;
+    }
+
+    // 4. Handle the dedup_key assignment based on the event action
+    if (eventAction === 'trigger') {
+        // Only add dedup key for triggers if the checkbox is checked
         if (dedupKeyForTrigger && dedupKey) {
             payload.dedup_key = dedupKey;
         }
     } else {
-        // For acknowledge/resolve actions
+        // Dedup key is mandatory for acknowledge/resolve actions
         payload.dedup_key = dedupKey;
     }
 
@@ -1205,7 +1206,7 @@ document.addEventListener('DOMContentLoaded', function () {
     toggleDedupKeyField();
 
     // Show welcome message
-    // showToast('Welcome to KrakenDuty! 🦑 Enhanced with persistent storage.', 'info', 4000);
+    // showToast('Welcome to KrakenDuty! 🦑 Enhanced with persistent local storage.', 'info', 4000);
 });
 
 // Prevent form submission on Enter key
