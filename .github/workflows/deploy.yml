@@ -32,12 +32,12 @@ jobs:
           MESSAGING_SENDER_ID: ${{ secrets.FIREBASE_MESSAGING_SENDER_ID }}
           APP_ID: ${{ secrets.FIREBASE_APP_ID }}
         run: |
-          sed -i "s|__FIREBASE_API_KEY__|$API_KEY|g" js/firebase-config.js
-          sed -i "s|__FIREBASE_AUTH_DOMAIN__|$AUTH_DOMAIN|g" js/firebase-config.js
-          sed -i "s|__FIREBASE_PROJECT_ID__|$PROJECT_ID|g" js/firebase-config.js
-          sed -i "s|__FIREBASE_STORAGE_BUCKET__|$STORAGE_BUCKET|g" js/firebase-config.js
-          sed -i "s|__FIREBASE_MESSAGING_SENDER_ID__|$MESSAGING_SENDER_ID|g" js/firebase-config.js
-          sed -i "s|__FIREBASE_APP_ID__|$APP_ID|g" js/firebase-config.js
+          sed -i "s|__FIREBASE_API_KEY__|$API_KEY|g" docs/js/firebase.js
+          sed -i "s|__FIREBASE_AUTH_DOMAIN__|$AUTH_DOMAIN|g" docs/js/firebase.js
+          sed -i "s|__FIREBASE_PROJECT_ID__|$PROJECT_ID|g" docs/js/firebase.js
+          sed -i "s|__FIREBASE_STORAGE_BUCKET__|$STORAGE_BUCKET|g" docs/js/firebase.js
+          sed -i "s|__FIREBASE_MESSAGING_SENDER_ID__|$MESSAGING_SENDER_ID|g" docs/js/firebase.js
+          sed -i "s|__FIREBASE_APP_ID__|$APP_ID|g" docs/js/firebase.js
 
       - name: Setup Pages
         uses: actions/configure-pages@v5
