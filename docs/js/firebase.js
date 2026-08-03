@@ -3,12 +3,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // === PART 1: Your Firebase Configuration ===
     const firebaseConfig = {
-      apiKey: "AIzaSyALIDeLjFZFlECt1wEWboCHazV58p7BT9k",
-      authDomain: "jp-test-355015.firebaseapp.com",
-      projectId: "jp-test-355015",
-      storageBucket: "jp-test-355015.firebasestorage.app",
-      messagingSenderId: "87829320244",
-      appId: "1:87829320244:web:2fdce0e2f48cb2c0283061"
+        apiKey: "__FIREBASE_API_KEY__",
+        authDomain: "__FIREBASE_AUTH_DOMAIN__",
+        projectId: "__FIREBASE_PROJECT_ID__",
+        storageBucket: "__FIREBASE_STORAGE_BUCKET__",
+        messagingSenderId: "__FIREBASE_MESSAGING_SENDER_ID__",
+        appId: "__FIREBASE_APP_ID__"
     };
 
     // === PART 2: Firebase Initialization ===
@@ -34,7 +34,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // === PART 4: Action Logic (Smart Increment) ===
-    window.incrementKrakenCount = async function() {
+    window.incrementKrakenCount = async function () {
         console.log("Button clicked. Attempting to increment counter...");
         try {
             // A transaction is the safest way to read and then write a value.
