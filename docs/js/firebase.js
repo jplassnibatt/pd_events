@@ -13,6 +13,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // === PART 2: Firebase Initialization ===
     firebase.initializeApp(firebaseConfig);
+
+    const appCheck = firebase.appCheck();
+    appCheck.activate(
+        '6LfwT3QtAAAAAJ4RTMGliz2Ufyw_ViBhVBZ3pdeG',
+        true
+    );
+
     const db = firebase.firestore();
 
     // === PART 3: Display Logic (Safe, Read-Only) ===
